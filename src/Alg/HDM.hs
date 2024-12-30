@@ -2,7 +2,6 @@ module Alg.HDM (runHDM) where
 
 import Control.Monad.Except
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
-import Data.Foldable (Foldable (toList))
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
