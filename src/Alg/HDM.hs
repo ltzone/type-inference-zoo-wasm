@@ -1,4 +1,4 @@
-module Alg.HDM (runHDM) where
+module Alg.HDM (runAlgW) where
 
 import Control.Monad.Except
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
@@ -46,7 +46,7 @@ mgu TBool TBool = return nullSubst
 mgu (TArr t1 t2) (TArr t1' t2') = do
   s1 <- mgu t1 t1'
   s2 <- mgu (apply s1 t2) (apply s1 t2')
-  return (s1 `compSubst` s2)
+  return $ s1 `compSubst` s2
 mgu (TVar a) t = varBind a t
 mgu t (TVar a) = varBind a t
 mgu t1 t2 = throwError $ "cannot unify " ++ show t1 ++ " with " ++ show t2
@@ -60,8 +60,8 @@ varBind u t
 freshTVar :: InferMonad TyVar
 freshTVar = fresh . s2n $ "a"
 
-infer :: Env -> Trm -> InferMonad (Subst, Typ, Tree String)
-infer env tm = do
+algW :: Env -> Trm -> InferMonad (Subst, Typ, Tree String)
+algW env tm = do
   lift $ tell ["Infering: " ++ showInput]
   case tm of
     LitInt _ -> ret "LitInt" nullSubst TInt []
@@ -75,20 +75,20 @@ infer env tm = do
       (x, tm') <- unbind bnd
       a <- freshTVar
       let env' = env `Map.union` Map.singleton x (TVar a)
-      (s1, t1, tree) <- infer env' tm'
+      (s1, t1, tree) <- algW env' tm'
       ret "Lam" s1 (TArr (apply s1 (TVar a)) t1) [tree]
     App tm1 tm2 -> do
       a <- freshTVar
-      (s1, ty1, tree1) <- infer env tm1
-      (s2, ty2, tree2) <- infer (Map.map (apply s1) env) tm2
+      (s1, ty1, tree1) <- algW env tm1
+      (s2, ty2, tree2) <- algW (Map.map (apply s1) env) tm2
       s3 <- mgu (apply s2 ty1) (TArr ty2 (TVar a))
       ret "App" (s3 `compSubst` s2 `compSubst` s1) (apply s3 (TVar a)) [tree1, tree2]
     Let tm1 bnd -> do
       (x, tm2) <- unbind bnd
-      (s1, ty1, tree1) <- infer env tm1
+      (s1, ty1, tree1) <- algW env tm1
       let t' = gen (Map.map (apply s1) env) ty1
           env' = Map.insert x t' env
-      (s2, ty2, tree2) <- infer (Map.map (apply s1) env') tm2
+      (s2, ty2, tree2) <- algW (Map.map (apply s1) env') tm2
       ret "Let" (s1 `compSubst` s2) ty2 [tree1, tree2]
     _ -> throwError "not implemented"
   where
@@ -103,8 +103,8 @@ infer env tm = do
       lift $ tell ["Infered[" ++ rule ++ "]: " ++ showOutput s ty]
       return (s, ty, Node (rule ++ ": " ++ showOutput s ty) trees)
 
-runHDM :: Trm -> Either String (Tree String)
-runHDM tm = case runInferMonad $ infer Map.empty tm of
+runAlgW :: Trm -> Either String (Tree String)
+runAlgW tm = case runInferMonad $ algW Map.empty tm of
   Left errs -> Left (intercalate "\n" errs)
   Right ((_, _, tree), _) -> Right tree
 
