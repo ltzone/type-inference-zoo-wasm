@@ -64,6 +64,7 @@ atom =
       letRec,
       letExp,
       ifExp,
+      tuple,
       Var . s2n <$> identifier,
       LitBool True <$ rword "True",
       LitBool False <$ rword "False",
@@ -104,6 +105,11 @@ ifExp = do
   e2 <- trm
   rword "else"
   If e1 e2 <$> trm
+
+tuple :: Parser Trm
+tuple = do
+  es <- parens $ trm `sepBy` symbol ","
+  return $ Tuple es
 
 ------------------------------------------------------------------------
 -- Types

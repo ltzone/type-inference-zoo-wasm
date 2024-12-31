@@ -1,12 +1,13 @@
 module Alg.HDM (runAlgW) where
 
+import Control.Monad (foldM)
 import Control.Monad.Except
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.Tree (Tree (Node))
-import Lib (InferMonad, runInferMonad)
+import Lib (InferMonad, runInferMonad, freshTVar)
 import Syntax (TmVar, Trm (..), TyVar, Typ (..))
 import Unbound.Generics.LocallyNameless hiding (Subst)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -57,9 +58,6 @@ varBind u t
   | u `elem` toListOf fv t = throwError $ show u ++ " occurs in " ++ show t
   | otherwise = return $ Map.singleton u t
 
-freshTVar :: InferMonad TyVar
-freshTVar = fresh . s2n $ "a"
-
 algW :: Env -> Trm -> InferMonad (Subst, Typ, Tree String)
 algW env tm = do
   lift $ tell ["Infering: " ++ showInput]
@@ -90,6 +88,16 @@ algW env tm = do
           env' = Map.insert x t' env
       (s2, ty2, tree2) <- algW (Map.map (apply s1) env') tm2
       ret "Let" (s1 `compSubst` s2) ty2 [tree1, tree2]
+    Tuple tms -> do
+      (s, tys, trees) <-
+        foldM
+          ( \(s', tys', trees') tm' -> do
+              (s'', ty', tree') <- algW (Map.map (apply s') env) tm'
+              return (s'' `compSubst` s', tys' ++ [ty'], trees' ++ [tree'])
+          )
+          (nullSubst, [], [])
+          tms
+      ret "Tuple" s (TTuple tys) trees
     _ -> throwError "not implemented"
   where
     showInput :: String

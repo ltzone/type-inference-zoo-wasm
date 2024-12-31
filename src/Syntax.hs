@@ -17,6 +17,7 @@ data Typ
   | TVar TyVar
   | TArr Typ Typ
   | TAll (Bind TyVar Typ)
+  | TTuple [Typ]
   deriving (Generic, Typeable)
 
 data PrimOp
@@ -44,6 +45,7 @@ data Trm
   | Op PrimOp
   | BinOp PrimOp Trm Trm
   | If Trm Trm Trm
+  | Tuple [Trm]
   deriving (Generic, Typeable)
 
 instance Alpha Typ
@@ -79,6 +81,9 @@ instance Show Typ where
         (x, t) <- unbind bnd
         t' <- showsPrecFresh 0 t
         return $ showParen (p > 0) $ showString "∀" . shows x . showString ". " . t'
+      showsPrecFresh _ (TTuple ts) = do
+        ts' <- mapM (showsPrecFresh 0) ts
+        return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) ts' . showString ")"
 
 showOp :: PrimOp -> ShowS
 showOp Add = showString "+"
@@ -131,3 +136,6 @@ instance Show Trm where
         e2' <- showsPrecFresh 0 e2
         e3' <- showsPrecFresh 0 e3
         return $ showParen (p > 0) $ showString "if " . e1' . showString " then " . e2' . showString " else " . e3'
+      showsPrecFresh _ (Tuple es) = do
+        es' <- mapM (showsPrecFresh 0) es
+        return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) es' . showString ")"
