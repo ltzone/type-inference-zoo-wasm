@@ -29,15 +29,13 @@ compSubst :: Subst -> Subst -> Subst
 compSubst s1 s2 = Map.map (apply s1) s2 `Map.union` s1
 
 inst :: Typ -> InferMonad Typ
-inst (TAll bnd) = do
-  (_, t) <- unbind bnd
-  inst t
-inst t = return t
+inst (TAll bnd) = unbind bnd >>= inst . snd
+inst ty = return ty
 
 gen :: Env -> Typ -> Typ
-gen env t = foldl (\t' x -> TAll $ bind x t') t ftv
+gen env ty = foldl (\ty' x -> TAll $ bind x ty') ty ftv
   where
-    tFtv = Set.fromList $ toListOf fv t
+    tFtv = Set.fromList $ toListOf fv ty
     envFtv = Set.fromList $ concatMap (toListOf fv) $ Map.elems env
     ftv = Set.toList $ tFtv `Set.difference` envFtv
 
@@ -97,8 +95,8 @@ algW env tm = do
       (x, tm') <- unbind bnd
       a <- freshTVar
       let env' = env `Map.union` Map.singleton x (TVar a)
-      (s1, t1, tree) <- algW env' tm'
-      ret "Lam" s1 (TArr (apply s1 (TVar a)) t1) [tree]
+      (s1, ty1, tree) <- algW env' tm'
+      ret "Lam" s1 (TArr (apply s1 (TVar a)) ty1) [tree]
     App tm1 tm2 -> do
       a <- freshTVar
       (s1, ty1, tree1) <- algW env tm1
@@ -108,8 +106,8 @@ algW env tm = do
     Let tm1 bnd -> do
       (x, tm2) <- unbind bnd
       (s1, ty1, tree1) <- algW env tm1
-      let t' = gen (Map.map (apply s1) env) ty1
-          env' = Map.insert x t' env
+      let ty' = gen (Map.map (apply s1) env) ty1
+          env' = Map.insert x ty' env
       (s2, ty2, tree2) <- algW (Map.map (apply s1) env') tm2
       ret "Let" (s1 `compSubst` s2) ty2 [tree1, tree2]
     Tuple tms -> do
@@ -140,7 +138,7 @@ runAlgW tm = case runInferMonad $ algW Map.empty tm of
   Right ((_, _, tree), _) -> Right tree
 
 showEnv :: Env -> String
-showEnv env = intercalate ", " $ map (\(x, t) -> show x ++ ": " ++ show t) (Map.toList env)
+showEnv env = intercalate ", " $ map (\(x, ty) -> show x ++ ": " ++ show ty) (Map.toList env)
 
 showSubst :: Subst -> String
-showSubst s = "{" ++ intercalate ", " (map (\(a, t) -> show t ++ " / " ++ show a) (Map.toList s)) ++ "}"
+showSubst s = "{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ show a) (Map.toList s)) ++ "}"
