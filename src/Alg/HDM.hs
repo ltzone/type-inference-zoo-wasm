@@ -7,7 +7,7 @@ import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.Tree (Tree (Node))
-import Lib (InferMonad, runInferMonad, freshTVar)
+import Lib (InferMonad, freshTVar, runInferMonad)
 import Syntax (TmVar, Trm (..), TyVar, Typ (..))
 import Unbound.Generics.LocallyNameless hiding (Subst)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -16,8 +16,8 @@ type Env = Map.Map TmVar Typ
 
 type Subst = Map.Map TyVar Typ
 
-remove :: Env -> TmVar -> Env
-remove env x = Map.delete x env
+-- remove :: Env -> TmVar -> Env
+-- remove env x = Map.delete x env
 
 apply :: Subst -> Typ -> Typ
 apply = substs . Map.toList
@@ -41,22 +41,46 @@ gen env t = foldl (\t' x -> TAll $ bind x t') t ftv
     envFtv = Set.fromList $ concatMap (toListOf fv) $ Map.elems env
     ftv = Set.toList $ tFtv `Set.difference` envFtv
 
-mgu :: Typ -> Typ -> InferMonad Subst
-mgu TInt TInt = return nullSubst
-mgu TBool TBool = return nullSubst
-mgu (TArr t1 t2) (TArr t1' t2') = do
-  s1 <- mgu t1 t1'
-  s2 <- mgu (apply s1 t2) (apply s1 t2')
-  return $ s1 `compSubst` s2
-mgu (TVar a) t = varBind a t
-mgu t (TVar a) = varBind a t
-mgu t1 t2 = throwError $ "cannot unify " ++ show t1 ++ " with " ++ show t2
+mgu :: Typ -> Typ -> InferMonad (Subst, Tree String)
+mgu ty1 ty2 = do
+  lift $ tell ["Unifying: " ++ show ty1 ++ " ~ " ++ show ty2]
+  case (ty1, ty2) of
+    (TArr ty1' ty1'', TArr ty2' ty2'') -> do
+      (s1, tree1) <- mgu ty1' ty2'
+      (s2, tree2) <- mgu (apply s1 ty1'') (apply s1 ty2'')
+      ret (s1 `compSubst` s2) [tree1, tree2]
+    (TVar a, ty) -> varBind a ty >>= \s -> ret s []
+    (ty, TVar a) -> varBind a ty >>= \s -> ret s []
+    (TInt, TInt) -> ret nullSubst []
+    (TBool, TBool) -> ret nullSubst []
+    (TTuple tys, TTuple tys')
+      | length tys == length tys' ->
+          foldM
+            ( \(s, trees) (ty, ty') -> do
+                (s', tree) <- mgu (apply s ty) (apply s ty')
+                return (s' `compSubst` s, trees ++ [tree])
+            )
+            (nullSubst, [])
+            (zip tys tys')
+            >>= uncurry ret
+    _ -> throwError $ "cannot unify " ++ show ty1 ++ " with " ++ show ty2
+  where
+    showInput :: String
+    showInput = show ty1 ++ " ~ " ++ show ty2
+
+    showOutput :: Subst -> String
+    showOutput s = showInput ++ " ~> " ++ showSubst s
+
+    ret :: Subst -> [Tree String] -> InferMonad (Subst, Tree String)
+    ret s trees = do
+      lift $ tell ["Unified: " ++ showOutput s]
+      return (s, Node ("Unify: " ++ showOutput s) trees)
 
 varBind :: TyVar -> Typ -> InferMonad Subst
-varBind u t
-  | aeq t (TVar u) = return nullSubst
-  | u `elem` toListOf fv t = throwError $ show u ++ " occurs in " ++ show t
-  | otherwise = return $ Map.singleton u t
+varBind a ty
+  | aeq ty (TVar a) = return nullSubst
+  | a `elem` toListOf fv ty = throwError $ show a ++ " occurs in " ++ show ty
+  | otherwise = return $ Map.singleton a ty
 
 algW :: Env -> Trm -> InferMonad (Subst, Typ, Tree String)
 algW env tm = do
@@ -79,8 +103,8 @@ algW env tm = do
       a <- freshTVar
       (s1, ty1, tree1) <- algW env tm1
       (s2, ty2, tree2) <- algW (Map.map (apply s1) env) tm2
-      s3 <- mgu (apply s2 ty1) (TArr ty2 (TVar a))
-      ret "App" (s3 `compSubst` s2 `compSubst` s1) (apply s3 (TVar a)) [tree1, tree2]
+      (s3, tree3) <- mgu (apply s2 ty1) (TArr ty2 (TVar a))
+      ret "App" (s3 `compSubst` s2 `compSubst` s1) (apply s3 (TVar a)) [tree1, tree2, tree3]
     Let tm1 bnd -> do
       (x, tm2) <- unbind bnd
       (s1, ty1, tree1) <- algW env tm1
@@ -104,8 +128,7 @@ algW env tm = do
     showInput = showEnv env ++ " |- " ++ show tm
 
     showOutput :: Subst -> Typ -> String
-    showOutput s ty = showInput ++ " : " ++ show ty ++ " with " ++ showSubst s
-
+    showOutput _ ty = showInput ++ " : " ++ show ty -- ++ " with " ++ showSubst s
     ret :: String -> Subst -> Typ -> [Tree String] -> InferMonad (Subst, Typ, Tree String)
     ret rule s ty trees = do
       lift $ tell ["Infered[" ++ rule ++ "]: " ++ showOutput s ty]

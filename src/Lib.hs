@@ -2,7 +2,7 @@
 
 module Lib (InferMonad, runInferMonad, freshTVar) where
 
-import Control.Monad.RWS (MonadTrans (lift), RWST, runRWST)
+import Control.Monad.RWS (MonadTrans (lift), RWST, runRWST, get, put)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
 import Syntax (TyVar)
 import Unbound.Generics.LocallyNameless (FreshMT, runFreshMT)
@@ -21,4 +21,8 @@ runInferMonad m = case runFreshMT $ runRWST (runExceptT m) () 0 of
   Just (Right res, _, msgs) -> Right (res, msgs)
 
 freshTVar :: InferMonad TyVar
-freshTVar = fresh . s2n $ "a"
+freshTVar = do
+  let letters = ["a", "b", "c", "d"]
+  varId <- get
+  put (varId + 1)
+  fresh . s2n $ letters !! (varId `mod` length letters)
