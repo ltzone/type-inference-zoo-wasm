@@ -41,12 +41,18 @@ trmOps =
   ]
 
 appTrm :: Parser Trm
-appTrm = postfixChain factor app
+appTrm = postfixChain factor (try tapp <|> app)
 
 app :: Parser (Trm -> Trm)
 app = do
   e <- factor
   return (`App` e)
+
+tapp :: Parser (Trm -> Trm)
+tapp = do
+  symbol "@"
+  t <- typ
+  return (`TApp` t)
 
 factor :: Parser Trm
 factor = postfixChain atom annOp
@@ -61,6 +67,7 @@ atom :: Parser Trm
 atom =
   choice
     [ trmBind Lam $ symbol "\\",
+      tlam,
       letRec,
       letExp,
       ifExp,
@@ -78,6 +85,13 @@ trmBind c p = do
   x <- identifier
   symbol "->"
   c . bind (s2n x) <$> trm
+
+tlam :: Parser Trm
+tlam = do
+  rword "/\\"
+  x <- identifier
+  symbol "."
+  TLam . bind (s2n x) <$> trm
 
 letExp :: Parser Trm
 letExp = do
@@ -128,12 +142,27 @@ typOps = [[InfixR (TArr <$ symbol "->")]]
 aTyp :: Parser Typ
 aTyp =
   choice
-    [tconst, parens typ]
+    [ tAll,
+      TVar . s2n <$> identifier,
+      tConst,
+      parens typ
+    ]
 
-tconst :: Parser Typ
-tconst =
+tAll :: Parser Typ
+tAll = do
+  rword "forall"
+  x <- identifier
+  symbol "."
+  TAll . bind (s2n x) <$> typ
+
+tConst :: Parser Typ
+tConst =
   choice
-    [TInt <$ rword "Int"]
+    [ TInt <$ rword "Int",
+      TBool <$ rword "Bool",
+      TTop <$ rword "Top",
+      TBot <$ rword "Bot"
+    ]
 
 ------------------------------------------------------------------------
 -- Misc

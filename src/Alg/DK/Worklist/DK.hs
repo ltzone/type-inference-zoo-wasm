@@ -137,4 +137,4 @@ runInfer ws = case runInferMonad $ infer "Init" ws of
   Right (_, msgs) -> Right msgs
 
 runWorklist :: Trm -> Either [String] [String]
-runWorklist tm = runInfer [WJug (Inf tm (bind (s2n "$final") End))]
+runWorklist tm = runInfer [WJug (Inf tm (bind (s2n "_") End))]

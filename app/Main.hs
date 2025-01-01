@@ -6,7 +6,6 @@ import Opt (Option (..), options)
 import Parser (parseTrm)
 import System.Console.GetOpt
 import System.Environment (getArgs)
-import Control.Monad.RWS (MonadState(put))
 
 main :: IO ()
 main = do
