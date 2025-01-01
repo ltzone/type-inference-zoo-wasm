@@ -1,7 +1,7 @@
 module Alg.HDM.AlgW (runAlgW) where
 
 import Control.Monad (foldM)
-import Control.Monad.Except
+import Control.Monad.Except ( MonadError(throwError) )
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.List (intercalate)
 import qualified Data.Map as Map

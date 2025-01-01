@@ -9,9 +9,9 @@ import Control.Monad.Error.Class (MonadError (throwError))
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
 import Lib (InferMonad)
-import Syntax
+import Syntax ( TyVar, TmVar, Typ, Trm )
 import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, subst, unbind)
-import Unbound.Generics.LocallyNameless.Fresh
+import Unbound.Generics.LocallyNameless.Fresh ( FreshM, runFreshM )
 
 data Judgment
   = Sub Typ Typ

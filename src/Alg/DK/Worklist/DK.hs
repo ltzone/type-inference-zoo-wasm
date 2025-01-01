@@ -6,7 +6,7 @@ module Alg.DK.Worklist.DK where
 
 import Alg.DK.Common (isAll)
 import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (ETVarBind, TVarBind), Worklist, before, substWL)
-import Control.Monad.Except
+import Control.Monad.Except ( MonadError(throwError) )
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Lib (InferMonad, freshTVar, runInferMonad)
