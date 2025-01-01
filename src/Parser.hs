@@ -32,11 +32,11 @@ trm = makeExprParser appTrm trmOps
 
 trmOps :: [[Operator Parser Trm]]
 trmOps =
-  [ [ InfixL (BinOp Add <$ symbol "+"),
-      InfixL (BinOp Sub <$ symbol "-")
+  [ [ InfixL (BinOp OpAdd <$ symbol "+"),
+      InfixL (BinOp OpSub <$ symbol "-")
     ],
-    [ InfixL (BinOp Mul <$ symbol "*"),
-      InfixL (BinOp Div <$ symbol "/")
+    [ InfixL (BinOp OpMul <$ symbol "*"),
+      InfixL (BinOp OpDiv <$ symbol "/")
     ]
   ]
 
@@ -64,7 +64,7 @@ atom =
       letRec,
       letExp,
       ifExp,
-      tuple,
+      try tuple,
       Var . s2n <$> identifier,
       LitBool True <$ rword "True",
       LitBool False <$ rword "False",
@@ -76,7 +76,7 @@ trmBind :: (Bind TmVar Trm -> Trm) -> Parser () -> Parser Trm
 trmBind c p = do
   p
   x <- identifier
-  symbol "."
+  symbol "->"
   c . bind (s2n x) <$> trm
 
 letExp :: Parser Trm
@@ -108,8 +108,12 @@ ifExp = do
 
 tuple :: Parser Trm
 tuple = do
-  es <- parens $ trm `sepBy` symbol ","
-  return $ Tuple es
+  _ <- symbol "("
+  first <- trm
+  _ <- symbol ","
+  rest <- many (symbol "," *> trm)
+  _ <- symbol ")"
+  return $ Tuple (first : rest)
 
 ------------------------------------------------------------------------
 -- Types

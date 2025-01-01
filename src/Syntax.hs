@@ -15,23 +15,25 @@ data Typ
   = TInt
   | TBool
   | TVar TyVar
+  | ETVar TyVar
+  | STVar TyVar
   | TArr Typ Typ
   | TAll (Bind TyVar Typ)
   | TTuple [Typ]
   deriving (Generic, Typeable)
 
 data PrimOp
-  = Add
-  | Sub
-  | Mul
-  | Div
+  = OpAdd
+  | OpSub
+  | OpMul
+  | OpDiv
   deriving (Eq, Generic)
 
 opTyp :: PrimOp -> Typ
-opTyp Add = TArr TInt (TArr TInt TInt)
-opTyp Sub = TArr TInt (TArr TInt TInt)
-opTyp Mul = TArr TInt (TArr TInt TInt)
-opTyp Div = TArr TInt (TArr TInt TInt)
+opTyp OpAdd = TArr TInt (TArr TInt TInt)
+opTyp OpSub = TArr TInt (TArr TInt TInt)
+opTyp OpMul = TArr TInt (TArr TInt TInt)
+opTyp OpDiv = TArr TInt (TArr TInt TInt)
 
 data Trm
   = LitInt Integer
@@ -55,11 +57,15 @@ instance Alpha Trm
 instance Alpha PrimOp
 
 instance Subst Trm Typ
+instance Subst Typ Trm
 
+instance Subst Typ PrimOp
 instance Subst Trm PrimOp
 
 instance Subst Typ Typ where
   isvar (TVar v) = Just (SubstName v)
+  isvar (ETVar v) = Just (SubstName v)
+  isvar (STVar v) = Just (SubstName v)
   isvar _ = Nothing
 
 instance Subst Trm Trm where
@@ -73,6 +79,8 @@ instance Show Typ where
       showsPrecFresh _ TInt = return $ showString "Int"
       showsPrecFresh _ TBool = return $ showString "Bool"
       showsPrecFresh _ (TVar x) = return $ shows x
+      showsPrecFresh _ (ETVar x) = return $ showString "^" . shows x
+      showsPrecFresh _ (STVar x) = return $ showString "~" . shows x
       showsPrecFresh p (TArr a b) = do
         a' <- showsPrecFresh 1 a
         b' <- showsPrecFresh 0 b
@@ -86,10 +94,10 @@ instance Show Typ where
         return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) ts' . showString ")"
 
 showOp :: PrimOp -> ShowS
-showOp Add = showString "+"
-showOp Sub = showString "-"
-showOp Mul = showString "*"
-showOp Div = showString "/"
+showOp OpAdd = showString "+"
+showOp OpSub = showString "-"
+showOp OpMul = showString "*"
+showOp OpDiv = showString "/"
 
 instance Show PrimOp where
   showsPrec _ = showParen True . showOp
@@ -123,7 +131,7 @@ instance Show Trm where
         e2' <- showsPrecFresh 0 e2
         return $ showParen (p > 0) $ showString "letrec " . shows x . showString " = " . e1' . showString " in " . e2'
       showsPrecFresh _ (Op op) = return $ shows op
-      showsPrecFresh p (BinOp op e1 e2) | op `elem` [Add, Sub] = do
+      showsPrecFresh p (BinOp op e1 e2) | op `elem` [OpAdd, OpSub] = do
         e1' <- showsPrecFresh 6 e1
         e2' <- showsPrecFresh 7 e2
         return $ showParen (p > 6) $ e1' . showString " " . showOp op . showString " " . e2'

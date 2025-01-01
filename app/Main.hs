@@ -6,6 +6,7 @@ import Opt (Option (..), options)
 import Parser (parseTrm)
 import System.Console.GetOpt
 import System.Environment (getArgs)
+import Control.Monad.RWS (MonadState(put))
 
 main :: IO ()
 main = do
@@ -17,4 +18,10 @@ main = do
         Right tm -> case runAlgW tm of
           Left err -> putStrLn err
           Right tree -> drawTree tree
+    (flags, [code], []) | Alg "Worklist" `elem` flags -> do
+      case parseTrm code of
+        Left err -> putStrLn err
+        Right tm -> case runWorklist tm of
+          Left errs -> putStrLn $ unlines errs
+          Right msgs -> putStrLn $ unlines msgs
     (_, _, errs) -> print errs
