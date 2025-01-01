@@ -23,4 +23,10 @@ main = do
         Right tm -> case runWorklist tm of
           Left errs -> putStrLn $ unlines errs
           Right msgs -> putStrLn $ unlines msgs
+    (flags, [code], []) | Alg "Elementary" `elem` flags -> do
+      case parseTrm code of
+        Left err -> putStrLn err
+        Right tm -> case runElementary tm of
+          Left errs -> putStrLn $ unlines errs
+          Right msgs -> putStrLn $ unlines msgs 
     (_, _, errs) -> print errs

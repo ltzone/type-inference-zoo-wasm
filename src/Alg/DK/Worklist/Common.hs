@@ -18,6 +18,7 @@ data Judgment
   | Chk Trm Typ
   | Inf Trm (Bind TyVar Judgment)
   | InfApp Typ Trm (Bind TyVar Judgment)
+  | InfTApp Typ Typ (Bind TyVar Judgment)
   | End
   deriving (Generic, Typeable)
 
@@ -94,4 +95,8 @@ instance Show Judgment where
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
         return $ shows t . showString " * " . shows e . showString " =>>" . shows x . showString " " . j'
+      showsPrecFresh _ (InfTApp t1 t2 bnd) = do
+        (x, j) <- unbind bnd
+        j' <- showsPrecFresh 0 j
+        return $ shows t1 . showString " o " . shows t2 . showString " =>>" . shows x . showString " " . j'
       showsPrecFresh _ End = return $ showString "End"

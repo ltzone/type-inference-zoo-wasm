@@ -5,8 +5,8 @@
 module Alg.DK.Worklist.DK where
 
 import Alg.DK.Common (isAll)
-import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (ETVarBind, TVarBind), Worklist, before, substWL)
-import Control.Monad.Except ( MonadError(throwError) )
+import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, before, substWL)
+import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Lib (InferMonad, freshTVar, runInferMonad)
@@ -16,8 +16,9 @@ import Unbound.Generics.LocallyNameless
     Subst (subst),
     bind,
     fv,
+    s2n,
     substBind,
-    unbind, s2n,
+    unbind,
   )
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
@@ -28,8 +29,10 @@ infer rule ws = do
     [] -> return ()
     WTVar _ _ : ws' -> infer "GCTVar" ws'
     WVar _ _ : ws' -> infer "GCVar" ws'
-    WJug (Sub TInt TInt) : ws' -> infer "SubInt" ws'
-    WJug (Sub TBool TBool) : ws' -> infer "SubBool" ws'
+    WJug (Sub TInt TInt) : ws' -> infer "SubReflInt" ws'
+    WJug (Sub TBool TBool) : ws' -> infer "SubReflBool" ws'
+    WJug (Sub (TVar a) (TVar b)) : ws' | a == b -> infer "SubReflTVar" ws'
+    WJug (Sub (ETVar a) (ETVar b)) : ws' | a == b -> infer "SubReflETVar" ws'
     WJug (Sub (TArr ty1 ty2) (TArr ty1' ty2')) : ws' ->
       infer "SubArr" $ WJug (Sub ty1' ty1) : WJug (Sub ty2 ty2') : ws'
     WJug (Sub (TAll bnd) ty2) : ws' | not (isAll ty2) -> do
