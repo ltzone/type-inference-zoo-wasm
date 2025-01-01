@@ -9,9 +9,10 @@ import Control.Monad.Error.Class (MonadError (throwError))
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
 import Lib (InferMonad)
-import Syntax ( TyVar, TmVar, Typ, Trm )
-import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, subst, unbind)
-import Unbound.Generics.LocallyNameless.Fresh ( FreshM, runFreshM )
+import Syntax (TmVar, Trm, TyVar, Typ)
+import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, fv, subst, unbind)
+import Unbound.Generics.LocallyNameless.Fresh (FreshM, runFreshM)
+import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
 data Judgment
   = Sub Typ Typ
@@ -26,6 +27,8 @@ data TBind
   = TVarBind
   | ETVarBind
   | STVarBind
+  | TVarBBind Typ
+  | STVarBBind Typ
   deriving (Generic, Typeable, Show)
 
 data Entry
@@ -68,16 +71,41 @@ before ws a b =
       (ws1', _) = break (\case WTVar b' _ -> b == b'; _ -> False) ws
    in length ws1 > length ws1'
 
+substWLOrdQuick :: [Entry] -> TyVar -> Typ -> Worklist -> InferMonad Worklist
+substWLOrdQuick move a ty ws = case ws of
+  [] -> throwError $ show a ++ "is not found"
+  entry@(WTVar b ETVarBind) : ws'
+    | a == b -> return $ move ++ ws'
+    | b `notElem` toListOf fv ty -> do
+        ws'' <- substWLOrdQuick move a ty ws'
+        return $ entry : ws''
+    | otherwise -> substWLOrdQuick (entry : move) a ty ws'
+  WTVar b bnd : ws'
+    | b `notElem` toListOf fv ty -> do
+        ws'' <- substWLOrdQuick move a ty ws'
+        return $ WTVar b (subst a ty bnd) : ws''
+    | otherwise -> throwError $ show b ++ " occurs in " ++ show ty
+  WVar x t : ws' -> do
+    ws'' <- substWLOrdQuick move a ty ws'
+    return $ WVar x (subst a ty t) : ws''
+  WJug c : ws' -> do
+    ws'' <- substWLOrdQuick move a ty ws'
+    return $ WJug (subst a ty c) : ws''
+
+substWLOrd :: TyVar -> Typ -> Worklist -> InferMonad Worklist
+substWLOrd = substWLOrdQuick []
+
 instance {-# OVERLAPPING #-} Show [Entry] where
   show [] = "⋅"
   show (WTVar a b : ws) =
     show ws
       ++ ", "
       ++ case b of
-        TVarBind -> ""
-        ETVarBind -> "^"
-        STVarBind -> "~"
-      ++ show a
+        TVarBind -> show a
+        ETVarBind -> "^" ++ show a
+        STVarBind -> "~" ++ show a
+        TVarBBind t -> show a ++ " <: " ++ show t
+        STVarBBind t -> "~" ++ show a ++ " <: " ++ show t
   show (WVar x t : ws) = show ws ++ ", " ++ show x ++ ": " ++ show t
   show (WJug c : ws) = show ws ++ " ||- " ++ show c
 
