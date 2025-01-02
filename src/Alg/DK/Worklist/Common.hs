@@ -8,9 +8,9 @@ module Alg.DK.Worklist.Common where
 import Control.Monad.Error.Class (MonadError (throwError))
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
-import Lib (InferMonad)
+import Lib (InferMonad, runInferMonad)
 import Syntax (TmVar, Trm, TyVar, Typ)
-import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, fv, subst, unbind)
+import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, bind, fv, s2n, subst, unbind)
 import Unbound.Generics.LocallyNameless.Fresh (FreshM, runFreshM)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
@@ -94,6 +94,14 @@ substWLOrdQuick move a ty ws = case ws of
 
 substWLOrd :: TyVar -> Typ -> Worklist -> InferMonad Worklist
 substWLOrd = substWLOrdQuick []
+
+runInfer :: (String -> Worklist -> InferMonad a) -> Worklist -> Either [String] [String]
+runInfer infer ws = case runInferMonad $ infer "Init" ws of
+  Left errs -> Left errs
+  Right (_, msgs) -> Right msgs
+
+initWL :: Trm -> [Entry]
+initWL tm = [WJug (Inf tm (bind (s2n "_") End))]
 
 instance {-# OVERLAPPING #-} Show [Entry] where
   show [] = "⋅"

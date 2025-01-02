@@ -5,11 +5,11 @@
 module Alg.DK.Worklist.DK where
 
 import Alg.DK.Common (isAll)
-import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, before, substWL)
+import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, before, substWL, runInfer, initWL)
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
-import Lib (InferMonad, freshTVar, runInferMonad)
+import Lib (InferMonad, freshTVar)
 import Syntax (Trm (..), Typ (..))
 import Unbound.Generics.LocallyNameless
   ( Fresh (fresh),
@@ -134,10 +134,5 @@ infer rule ws = do
       infer "InfAppETVar" ws''
     _ -> throwError $ "No matching rule for " ++ show ws
 
-runInfer :: Worklist -> Either [String] [String]
-runInfer ws = case runInferMonad $ infer "Init" ws of
-  Left errs -> Left errs
-  Right (_, msgs) -> Right msgs
-
 runWorklist :: Trm -> Either [String] [String]
-runWorklist tm = runInfer [WJug (Inf tm (bind (s2n "_") End))]
+runWorklist = runInfer infer . initWL
