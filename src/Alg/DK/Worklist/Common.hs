@@ -131,11 +131,11 @@ instance Show Judgment where
       showsPrecFresh _ (InfApp t e bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t . showString " * " . shows e . showString " =>>" . shows x . showString " " . j'
+        return $ shows t . showString " * " . shows e . showString " ==>>" . shows x . showString " " . j'
       showsPrecFresh _ (InfTApp t1 t2 bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t1 . showString " o " . shows t2 . showString " =>>" . shows x . showString " " . j'
+        return $ shows t1 . showString " o " . shows t2 . showString " ==>>" . shows x . showString " " . j'
       showsPrecFresh _ (Match t bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
