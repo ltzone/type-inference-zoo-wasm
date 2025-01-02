@@ -83,7 +83,7 @@ trmBind :: (Bind TmVar Trm -> Trm) -> Parser () -> Parser Trm
 trmBind c p = do
   p
   x <- identifier
-  symbol "->"
+  symbol "."
   c . bind (s2n x) <$> trm
 
 tLamB :: Parser Trm
@@ -124,11 +124,9 @@ ifExp = do
 tuple :: Parser Trm
 tuple = do
   _ <- symbol "("
-  first <- trm
-  _ <- symbol ","
-  rest <- many (symbol "," *> trm)
+  elems <- trm `sepBy1` symbol ","
   _ <- symbol ")"
-  return $ Tuple (first : rest)
+  return $ Tuple elems
 
 ------------------------------------------------------------------------
 -- Types
