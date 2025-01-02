@@ -9,6 +9,7 @@ import Control.Monad.Except (throwError)
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Data (Typeable)
 import Data.Foldable (find)
+import Data.List (intercalate)
 import Data.Tree (Tree (Node))
 import GHC.Generics (Generic)
 import Lib (InferMonad, runInferMonad)
@@ -25,10 +26,13 @@ data Ctx = CEmpty | CTyp Typ | CConsTrm Trm Ctx
 
 instance Alpha Ctx
 
+instance Show EnvEntry where
+  show :: EnvEntry -> String
+  show (VarBnd x ty) = show x ++ ": " ++ show ty
+
 instance {-# OVERLAPPING #-} Show [EnvEntry] where
   show :: [EnvEntry] -> String
-  show [] = ""
-  show (VarBnd x ty : env) = show x ++ " : " ++ show ty ++ ", " ++ show env
+  show env = intercalate ", " $ map show env
 
 instance Show Ctx where
   show :: Ctx -> String
