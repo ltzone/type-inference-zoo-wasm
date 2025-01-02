@@ -115,12 +115,12 @@ showsPrecTyp p (TAllB bnd b) = do
 showsPrecTyp p (TIntersection a b) = do
   -- TODO: I am unsure about the number
   a' <- showsPrecTyp 1 a
-  b' <- showsPrecTyp 0 b
+  b' <- showsPrecTyp 1 b
   return $ showParen (p > 0) $ a' . showString " & " . b'
 showsPrecTyp p (TUnion a b) = do
   -- TODO: I am unsure about the number
   a' <- showsPrecTyp 1 a
-  b' <- showsPrecTyp 0 b
+  b' <- showsPrecTyp 1 b
   return $ showParen (p > 0) $ a' . showString " | " . b'
 showsPrecTyp _ (TTuple ts) = do
   ts' <- mapM (showsPrecTyp 0) ts
