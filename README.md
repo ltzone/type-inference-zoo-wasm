@@ -31,7 +31,7 @@ stack exec type-inference-zoo-exe -- "let id = \x. x in (id 1, id True)" --alg W
   - *Jinxu Zhao and Bruno C. d. S. Oliveira.* **Elementary Type Inference.** ECOOP 2022.
 - [x] `Bounded`: [`./src/Alg/DK/Worklist/Bounded.hs`](./src/Alg/DK/Worklist/Bounded.hs)
   - *Chen Cui, Shengyi Jiang, and Bruno C. d. S. Oliveira.* **Greedy Implicit Bounded Quantification.** OOPSLA 2023.
-- [ ] `Contextual`: TODO
+- [x] `Contextual`: [`./src/Alg/Local/Contextual/Contextual.hs`](./src/Alg/Local/Contextual/Contextual.hs)
   - *Xu Xue and Bruno C. d. S. Oliveira.* **Contextual Typing.** ICFP 2024.
 - [x] `IU`: [`./src/Alg/DK/Worklist/IU.hs`](./src/Alg/DK/Worklist/IU.hs)
   - *Shengyi Jiang, Chen Cui and Bruno C. d. S. Oliveira.* **Bidirectional Higher-Rank Polymorphism with Intersection and Union Types.** POPL 2025.

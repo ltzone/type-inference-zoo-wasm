@@ -41,4 +41,10 @@ main = do
         Right tm -> case runIU tm of
           Left errs -> putStrLn $ unlines errs
           Right msgs -> putStrLn $ unlines msgs
+    (flags, [code], []) | Alg "Contextual" `elem` flags -> do
+      case parseTrm code of
+        Left err -> putStrLn err
+        Right tm -> case runContextual tm of
+          Left err -> putStrLn err
+          Right tree -> drawTree tree
     (_, _, errs) -> print errs

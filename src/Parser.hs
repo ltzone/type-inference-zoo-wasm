@@ -123,10 +123,12 @@ ifExp = do
 
 tuple :: Parser Trm
 tuple = do
-  _ <- symbol "("
-  elems <- trm `sepBy1` symbol ","
-  _ <- symbol ")"
-  return $ Tuple elems
+  symbol "("
+  first <- trm
+  symbol ","
+  rest <- trm `sepBy` symbol ","
+  symbol ")"
+  return $ Tuple (first : rest)
 
 ------------------------------------------------------------------------
 -- Types

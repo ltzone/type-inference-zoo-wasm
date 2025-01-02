@@ -39,6 +39,7 @@ library
       Alg.HDM.AlgW
       Alg.Local
       Alg.Local.Contextual
+      Alg.Local.Contextual.Contextual
       Alg.Local.Local
       Lib
       Opt
