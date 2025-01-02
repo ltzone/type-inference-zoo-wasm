@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Alg.DK.Worklist.Elementary (runElementary) where
 
@@ -10,13 +11,12 @@ import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Lib (InferMonad, freshTVar)
-import Syntax (Trm (..), Typ (..))
+import Syntax (Trm (..), Typ (..), pattern TAll, pattern TLam)
 import Unbound.Generics.LocallyNameless
   ( Fresh (fresh),
     Subst (subst),
     bind,
     fv,
-    s2n,
     substBind,
     unbind,
   )
@@ -29,8 +29,8 @@ infer rule ws = do
     [] -> return ()
     WTVar _ _ : ws' -> infer "GCTVar" ws'
     WVar _ _ : ws' -> infer "GCVar" ws'
-    WJug (Sub TInt TInt) : ws' -> infer "SubInt" ws'
-    WJug (Sub TBool TBool) : ws' -> infer "SubBool" ws'
+    WJug (Sub TInt TInt) : ws' -> infer "SubReflInt" ws'
+    WJug (Sub TBool TBool) : ws' -> infer "SubReflBool" ws'
     WJug (Sub (TVar a) (TVar b)) : ws' | a == b -> infer "SubReflTVar" ws'
     WJug (Sub (ETVar a) (ETVar b)) : ws' | a == b -> infer "SubReflETVar" ws'
     WJug (Sub (STVar a) (STVar b)) : ws' | a == b -> infer "SubReflSTVar" ws'
@@ -47,7 +47,7 @@ infer rule ws = do
       a <- freshTVar
       let ty1 = substBind bnd1 (ETVar a)
           ty2 = substBind bnd2 (ETVar a)
-      infer "SubAllR" $ WJug (Sub ty1 ty2) : WTVar a STVarBind : ws'
+      infer "SubAll" $ WJug (Sub ty1 ty2) : WTVar a STVarBind : ws'
     WJug (Sub (ETVar a) ty@(TArr ty1 ty2)) : ws'
       | a `notElem` toListOf fv ty -> do
           a1 <- fresh a

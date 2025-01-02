@@ -1,7 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms #-}
 
-module Syntax (TyVar, TmVar, Typ (..), PrimOp (..), opTyp, Trm (..)) where
+module Syntax (TyVar, TmVar, Typ (..), PrimOp (..), opTyp, Trm (..), pattern TAll, pattern TLam) where
 
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
@@ -20,9 +21,14 @@ data Typ
   | ETVar TyVar
   | STVar TyVar
   | TArr Typ Typ
-  | TAll (Bind TyVar Typ)
+  | TAllB (Bind TyVar Typ) Typ
   | TTuple [Typ]
   deriving (Generic, Typeable)
+
+pattern TAll :: Bind TyVar Typ -> Typ
+pattern TAll bnd <- TAllB bnd TTop
+  where
+    TAll bnd = TAllB bnd TTop
 
 data PrimOp
   = OpAdd
@@ -44,7 +50,7 @@ data Trm
   | Lam (Bind TmVar Trm)
   | App Trm Trm
   | Ann Trm Typ
-  | TLam (Bind TyVar Trm)
+  | TLamB (Bind TyVar Trm) Typ
   | TApp Trm Typ
   | Let Trm (Bind TmVar Trm)
   | LetRec (Bind TmVar (Trm, Trm))
@@ -53,6 +59,11 @@ data Trm
   | If Trm Trm Trm
   | Tuple [Trm]
   deriving (Generic, Typeable)
+
+pattern TLam :: Bind TyVar Trm -> Trm
+pattern TLam bnd <- TLamB bnd TTop
+  where
+    TLam bnd = TLamB bnd TTop
 
 instance Alpha Typ
 
@@ -94,6 +105,11 @@ showsPrecTyp p (TAll bnd) = do
   (x, t) <- unbind bnd
   t' <- showsPrecTyp 0 t
   return $ showParen (p > 0) $ showString "∀" . shows x . showString ". " . t'
+showsPrecTyp p (TAllB bnd b) = do
+  (x, t) <- unbind bnd
+  t' <- showsPrecTyp 0 t
+  b' <- showsPrecTyp 0 b
+  return $ showParen (p > 0) $ showString "∀(" . shows x . showString " <: " . b' . showString "). " . t'
 showsPrecTyp _ (TTuple ts) = do
   ts' <- mapM (showsPrecTyp 0) ts
   return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) ts' . showString ")"
@@ -129,6 +145,11 @@ showsPrecTrm p (TLam bnd) = do
   (a, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
   return $ showParen (p > 0) $ showString "Λ" . shows a . showString ". " . e'
+showsPrecTrm p (TLamB bnd b) = do
+  (a, e) <- unbind bnd
+  e' <- showsPrecTrm 0 e
+  b' <- showsPrecTyp 0 b
+  return $ showParen (p > 0) $ showString "Λ(" . shows a . showString " <: " . b' . showString "). " . e'
 showsPrecTrm p (TApp e t) = do
   e' <- showsPrecTrm 9 e
   t' <- showsPrecTyp 10 t

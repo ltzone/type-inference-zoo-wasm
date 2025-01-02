@@ -1,22 +1,22 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Alg.DK.Worklist.DK where
 
 import Alg.DK.Common (isAll)
-import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, before, substWL, runInfer, initWL)
+import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, before, initWL, runInfer, substWL)
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Lib (InferMonad, freshTVar)
-import Syntax (Trm (..), Typ (..))
+import Syntax (Trm (..), Typ (..), pattern TAll)
 import Unbound.Generics.LocallyNameless
   ( Fresh (fresh),
     Subst (subst),
     bind,
     fv,
-    s2n,
     substBind,
     unbind,
   )

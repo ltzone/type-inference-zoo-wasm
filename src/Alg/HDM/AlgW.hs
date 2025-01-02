@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 module Alg.HDM.AlgW (runAlgW) where
 
 import Control.Monad (foldM)
@@ -8,7 +10,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.Tree (Tree (Node))
 import Lib (InferMonad, freshTVar, runInferMonad)
-import Syntax (TmVar, Trm (..), TyVar, Typ (..))
+import Syntax (TmVar, Trm (..), TyVar, Typ (..), pattern TAll)
 import Unbound.Generics.LocallyNameless hiding (Subst)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 

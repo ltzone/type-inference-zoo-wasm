@@ -67,7 +67,7 @@ atom :: Parser Trm
 atom =
   choice
     [ trmBind Lam $ symbol "\\",
-      tlam,
+      tLamB,
       letRec,
       letExp,
       ifExp,
@@ -86,12 +86,13 @@ trmBind c p = do
   symbol "->"
   c . bind (s2n x) <$> trm
 
-tlam :: Parser Trm
-tlam = do
+tLamB :: Parser Trm
+tLamB = do
   rword "/\\"
-  x <- identifier
+  (x, b) <- idBound
   symbol "."
-  TLam . bind (s2n x) <$> trm
+  e <- trm
+  return $ TLamB (bind (s2n x) e) b
 
 letExp :: Parser Trm
 letExp = do
@@ -142,18 +143,19 @@ typOps = [[InfixR (TArr <$ symbol "->")]]
 aTyp :: Parser Typ
 aTyp =
   choice
-    [ tAll,
+    [ tAllB,
       TVar . s2n <$> identifier,
       tConst,
       parens typ
     ]
 
-tAll :: Parser Typ
-tAll = do
+tAllB :: Parser Typ
+tAllB = do
   rword "forall"
-  x <- identifier
+  (x, b) <- idBound
   symbol "."
-  TAll . bind (s2n x) <$> typ
+  ty <- typ
+  return $ TAllB (bind (s2n x) ty) b
 
 tConst :: Parser Typ
 tConst =
@@ -215,3 +217,17 @@ identifier = (lexeme . try) (p >>= check)
 
 identChar :: Parser Char
 identChar = alphaNumChar <|> oneOf "_'"
+
+idBound :: Parser (String, Typ)
+idBound = try explicit <|> implicit
+  where
+    implicit = do
+      x <- identifier
+      return (x, TTop)
+    explicit = do
+      symbol "("
+      x <- identifier
+      symbol "<:"
+      t <- aTyp
+      symbol ")"
+      return (x, t)
