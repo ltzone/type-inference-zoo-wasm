@@ -35,4 +35,10 @@ main = do
         Right tm -> case runBounded tm of
           Left errs -> putStrLn $ unlines errs
           Right msgs -> putStrLn $ unlines msgs 
+    (flags, [code], []) | Alg "IU" `elem` flags -> do
+      case parseTrm code of
+        Left err -> putStrLn err
+        Right tm -> case runIU tm of
+          Left errs -> putStrLn $ unlines errs
+          Right msgs -> putStrLn $ unlines msgs
     (_, _, errs) -> print errs

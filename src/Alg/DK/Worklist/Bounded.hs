@@ -80,12 +80,16 @@ infer rule ws = do
           : WJug (Sub b2 b1)
           : WTVar a (STVarBBind b1)
           : ws'
-    WJug (Sub (ETVar a) ty) : ws' | mono ws ty -> do
-      ws'' <- substWLOrd a ty ws'
-      infer "SubInstETVar" ws''
-    WJug (Sub ty (ETVar a)) : ws' | mono ws ty -> do
-      ws'' <- substWLOrd a ty ws'
-      infer "SubInstETVar" ws''
+    WJug (Sub (ETVar a) ty) : ws'
+      | a `notElem` toListOf fv ty,
+        mono ws ty -> do
+          ws'' <- substWLOrd a ty ws'
+          infer "SubInstETVar" ws''
+    WJug (Sub ty (ETVar a)) : ws'
+      | a `notElem` toListOf fv ty,
+        mono ws ty -> do
+          ws'' <- substWLOrd a ty ws'
+          infer "SubInstETVar" ws''
     WJug (Sub (ETVar a) ty@(TArr ty1 ty2)) : ws'
       | a `notElem` toListOf fv ty -> do
           a1 <- fresh a

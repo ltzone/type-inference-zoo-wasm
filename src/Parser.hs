@@ -138,7 +138,11 @@ typ :: Parser Typ
 typ = makeExprParser aTyp typOps
 
 typOps :: [[Operator Parser Typ]]
-typOps = [[InfixR (TArr <$ symbol "->")]]
+typOps =
+  [ [InfixR (TArr <$ symbol "->")],
+    [InfixL (TUnion <$ symbol "|")],
+    [InfixL (TIntersection <$ symbol "&")]
+  ]
 
 aTyp :: Parser Typ
 aTyp =

@@ -22,6 +22,8 @@ data Typ
   | STVar TyVar
   | TArr Typ Typ
   | TAllB (Bind TyVar Typ) Typ
+  | TIntersection Typ Typ
+  | TUnion Typ Typ
   | TTuple [Typ]
   deriving (Generic, Typeable)
 
@@ -110,6 +112,16 @@ showsPrecTyp p (TAllB bnd b) = do
   t' <- showsPrecTyp 0 t
   b' <- showsPrecTyp 0 b
   return $ showParen (p > 0) $ showString "∀(" . shows x . showString " <: " . b' . showString "). " . t'
+showsPrecTyp p (TIntersection a b) = do
+  -- TODO: I am unsure about the number
+  a' <- showsPrecTyp 1 a
+  b' <- showsPrecTyp 0 b
+  return $ showParen (p > 0) $ a' . showString " & " . b'
+showsPrecTyp p (TUnion a b) = do
+  -- TODO: I am unsure about the number
+  a' <- showsPrecTyp 1 a
+  b' <- showsPrecTyp 0 b
+  return $ showParen (p > 0) $ a' . showString " | " . b'
 showsPrecTyp _ (TTuple ts) = do
   ts' <- mapM (showsPrecTyp 0) ts
   return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) ts' . showString ")"
