@@ -25,15 +25,15 @@ stack exec type-inference-zoo-exe -- "let id = \x. x in (id 1, id True)" --alg W
   - Algorithm W.
 - [ ] `DK`: TODO
   - *Jana Dunfield and Neelakantan R. Krishnaswami.* **Complete and Easy Bidirectional Typechecking for Higher-rank Polymorphism.** ICFP 2013.
-- [x] `Worklist`: [`./src/Alg/Worklist/DK.hs`](./src/Alg/Worklist/DK.hs)
+- [x] `Worklist`: [`./src/Alg/DK/Worklist/DK.hs`](./src/Alg/DK/Worklist/DK.hs)
   - *Jinxu Zhao, Bruno C. d. S. Oliveira, and Tom Schrijvers.* **A Mechanical Formalization of Higher-Ranked Polymorphic Type Inference.** ICFP 2019.
-- [x] `Elementary`: [`./src/Alg/Worklist/Elementary.hs`](./src/Alg/Worklist/Elementary.hs)
+- [x] `Elementary`: [`./src/Alg/DK/Worklist/Elementary.hs`](./src/Alg/DK/Worklist/Elementary.hs)
   - *Jinxu Zhao and Bruno C. d. S. Oliveira.* **Elementary Type Inference.** ECOOP 2022.
-- [x] `Bounded`: [`./src/Alg/Worklist/Bounded.hs`](./src/Alg/Worklist/Bounded.hs)
+- [x] `Bounded`: [`./src/Alg/DK/Worklist/Bounded.hs`](./src/Alg/DK/Worklist/Bounded.hs)
   - *Chen Cui, Shengyi Jiang, and Bruno C. d. S. Oliveira.* **Greedy Implicit Bounded Quantification.** OOPSLA 2023.
 - [ ] `Contextual`: TODO
   - *Xu Xue and Bruno C. d. S. Oliveira.* **Contextual Typing.** ICFP 2024.
-- [x] `IU`: [`./src/Alg/Worklist/IU.hs`](./src/Alg/Worklist/IU.hs)
+- [x] `IU`: [`./src/Alg/DK/Worklist/IU.hs`](./src/Alg/DK/Worklist/IU.hs)
   - *Shengyi Jiang, Chen Cui and Bruno C. d. S. Oliveira.* **Bidirectional Higher-Rank Polymorphism with Intersection and Union Types.** POPL 2025.
 
 ## Contribution
