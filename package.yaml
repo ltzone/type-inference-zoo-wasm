@@ -1,7 +1,7 @@
 name:                type-inference-zoo
 version:             0.1.0.0
 github:              "cu1ch3n/type-inference-zoo"
-license:             BSD-3-Clause
+license:             MIT
 author:              "Chen Cui"
 maintainer:          "i@cuichen.cc"
 copyright:           "2025 Chen Cui"
