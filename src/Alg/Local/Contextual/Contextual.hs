@@ -16,7 +16,7 @@ import Syntax (TmVar, Trm (..), Typ (..))
 import Unbound.Generics.LocallyNameless (Alpha, aeq, unbind)
 
 data EnvEntry
-  = EBindTy TmVar Typ
+  = VarBnd TmVar Typ
 
 type Env = [EnvEntry]
 
@@ -28,7 +28,7 @@ instance Alpha Ctx
 instance {-# OVERLAPPING #-} Show [EnvEntry] where
   show :: [EnvEntry] -> String
   show [] = ""
-  show (EBindTy x ty : env) = show x ++ " : " ++ show ty ++ ", " ++ show env
+  show (VarBnd x ty : env) = show x ++ " : " ++ show ty ++ ", " ++ show env
 
 instance Show Ctx where
   show :: Ctx -> String
@@ -69,7 +69,7 @@ infer env ctx tm = do
     (CEmpty, LitInt _) -> ret "ALitInt" TInt []
     (CEmpty, LitBool _) -> ret "ALitBool" TBool []
     (CEmpty, Var x)
-      | Just (EBindTy _ ty) <- find (\case EBindTy x' _ -> x == x') env ->
+      | Just (VarBnd _ ty) <- find (\case VarBnd x' _ -> x == x') env ->
           ret "AVar" ty []
     (CEmpty, Ann tm1 ty) -> do
       (_, tree) <- infer env (CTyp ty) tm1
@@ -81,12 +81,12 @@ infer env ctx tm = do
         _ -> throwError $ "Non-function type: " ++ show arrTy
     (CTyp (TArr ty1 ty2), Lam bnd) -> do
       (x, tm1) <- unbind bnd
-      (ty3, tree) <- infer (EBindTy x ty1 : env) (CTyp ty2) tm1
+      (ty3, tree) <- infer (VarBnd x ty1 : env) (CTyp ty2) tm1
       ret "ALam1" (TArr ty1 ty3) [tree]
     (CConsTrm tm2 ctx', Lam bnd) -> do
       (x, tm1) <- unbind bnd
       (ty1, tree1) <- infer env CEmpty tm2
-      (ty2, tree2) <- infer (EBindTy x ty1 : env) ctx' tm1
+      (ty2, tree2) <- infer (VarBnd x ty1 : env) ctx' tm1
       ret "ALam2" (TArr ty1 ty2) [tree1, tree2]
     (_, _) | not (aeq ctx CEmpty) && genericConsumer tm -> do
       (ty, tree1) <- infer env CEmpty tm
