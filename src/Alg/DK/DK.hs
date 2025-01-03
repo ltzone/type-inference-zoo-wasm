@@ -35,7 +35,7 @@ instance Show Entry where
 
 instance {-# OVERLAPPING #-} Show [Entry] where
   show :: [Entry] -> String
-  show ctx = intercalate ", " $ map show ctx
+  show = intercalate ", " . map show . reverse
 
 mono :: Typ -> Bool
 mono TInt = True

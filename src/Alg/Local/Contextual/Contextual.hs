@@ -32,7 +32,7 @@ instance Show EnvEntry where
 
 instance {-# OVERLAPPING #-} Show [EnvEntry] where
   show :: [EnvEntry] -> String
-  show env = intercalate ", " $ map show env
+  show = intercalate ", " . map show . reverse
 
 instance Show Ctx where
   show :: Ctx -> String
