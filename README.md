@@ -4,9 +4,9 @@
 
 Welcome to **Type Inference Zoo**! This project is dedicated to implementing a variety of type inference algorithms. It serves as a personal project, as I am trying to understand the type inference algorithms well by implmenting them. Considering that it might be helpful for those who are also exploring type inference algoreithms, I am glad to make them avaliable online.
 
-🗿: There are indeed animals (implementations) in the zoo, not just references to animals.
+🗿🗿🗿 There are indeed animals (implementations) in the zoo, not just references to animals.
 
-A static online web demo is coming soon.
+A static online web demo is coming soon!
 
 ## Get Started
 
@@ -23,7 +23,7 @@ stack exec type-inference-zoo-exe -- "let id = \x. x in (id 1, id True)" --alg W
 
 - [x] `W`: [`./src/Alg/HDM/AlgW.hs`](./src/Alg/HDM/AlgW.hs)
   - Algorithm W.
-- [ ] `DK`: TODO
+- [x] `DK`: [`./src/Alg/DK/DK.hs`](./src/Alg/DK/DK.hs)
   - *Jana Dunfield and Neelakantan R. Krishnaswami.* **Complete and Easy Bidirectional Typechecking for Higher-rank Polymorphism.** ICFP 2013.
 - [x] `Worklist`: [`./src/Alg/DK/Worklist/DK.hs`](./src/Alg/DK/Worklist/DK.hs)
   - *Jinxu Zhao, Bruno C. d. S. Oliveira, and Tom Schrijvers.* **A Mechanical Formalization of Higher-Ranked Polymorphic Type Inference.** ICFP 2019.

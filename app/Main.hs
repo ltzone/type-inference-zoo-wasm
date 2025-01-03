@@ -17,6 +17,12 @@ main = do
         Right tm -> case runAlgW tm of
           Left err -> putStrLn err
           Right tree -> drawTree tree
+    (flags, [code], []) | Alg "DK" `elem` flags -> do
+      case parseTrm code of
+        Left err -> putStrLn err
+        Right tm -> case runDK tm of
+          Left err -> putStrLn err
+          Right tree -> drawTree tree
     (flags, [code], []) | Alg "Worklist" `elem` flags -> do
       case parseTrm code of
         Left err -> putStrLn err
