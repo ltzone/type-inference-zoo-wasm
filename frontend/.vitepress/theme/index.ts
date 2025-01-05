@@ -43,7 +43,7 @@ export default {
         preset: MyPreset,
         options: {
           prefix: 'p',
-          darkModeSelector: 'system',
+          darkModeSelector: '.dark',
           cssLayer: false
         }
       }

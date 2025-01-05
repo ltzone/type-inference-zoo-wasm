@@ -4,6 +4,7 @@ outline: page
 
 <script setup>
 import CodeMirror from 'vue-codemirror6';
+import {ayuLight, dracula} from 'thememirror';
 
 import { onMounted, ref } from 'vue';
 
@@ -20,6 +21,8 @@ const autoFilteredEx = ref([]);
 
 const code = ref('');
 const loading = ref(false);
+
+const themeExt = ref([ayuLight]);
 
 function load() {
     loading.value = true;
@@ -63,6 +66,22 @@ function handleExampleSelect(event) {
     code.value = selected.code;
   }
 }
+
+const updateCodeMirrorTheme = () => {
+  if (document.documentElement.classList.contains('dark')) {
+    themeExt.value = [dracula];
+  } else {
+    themeExt.value = [ayuLight];
+  }
+};
+
+onMounted(() => {
+  updateCodeMirrorTheme();
+  const observer = new MutationObserver(() => {
+    updateCodeMirrorTheme();
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
 </script>
 
 
@@ -80,5 +99,5 @@ function handleExampleSelect(event) {
 </div>
 
 <div class="mt-2 mb-2">
-    <code-mirror v-model="code" basic></code-mirror>
+    <code-mirror v-model="code" :extensions="themeExt" basic></code-mirror>
 </div>
