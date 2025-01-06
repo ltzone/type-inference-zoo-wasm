@@ -143,7 +143,7 @@ function handleExampleSelect(event) {
     </div>
 </div>
 
-<div class="flex flex-col gap-2 mb-2">
+<div class="flex flex-col gap-2 mb-4">
     <label>Input Program</label>
     <Textarea v-model="code" class="code" rows="2" spellcheck="false"/>
     <div class="flex justify-end mb-4">
@@ -153,5 +153,5 @@ function handleExampleSelect(event) {
 
 <div class="flex flex-col gap-2 mb-4">
     <label>Inference Output</label>
-    <pre>{{ output }}</pre>
+    <pre class="output">{{ output }}</pre>
 </div>

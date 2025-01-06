@@ -4,6 +4,7 @@ import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import './style.css'
 import 'primeicons/primeicons.css';
+import "@fontsource/iosevka";
 import PrimeVue from 'primevue/config';
 import Button from "primevue/button";
 import AutoComplete from "primevue/autocomplete";

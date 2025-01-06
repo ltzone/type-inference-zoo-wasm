@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@bjorn3/browser_wasi_shim": "^0.3.0",
+    "@fontsource/iosevka": "^5.1.0",
     "@primevue/themes": "^4.2.5",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.5",
