@@ -145,3 +145,8 @@
 .cm-gutters { margin: 1px; }
 .cm-scroller { overflow: auto; }
 .cm-wrap { border: 1px solid silver }
+
+.code {
+  font-size: 1.5em !important;
+  font-family: monospace !important;
+}

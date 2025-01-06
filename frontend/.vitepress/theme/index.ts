@@ -8,6 +8,7 @@ import PrimeVue from 'primevue/config';
 import Button from "primevue/button";
 import AutoComplete from "primevue/autocomplete";
 import SelectButton from 'primevue/selectbutton';
+import Textarea from 'primevue/textarea';
 import { definePreset } from '@primevue/themes';
 import Aura from '@primevue/themes/aura';
 
@@ -51,5 +52,6 @@ export default {
     app.component('Button', Button);
     app.component('AutoComplete', AutoComplete);
     app.component('SelectButton', SelectButton);
+    app.component('Textarea', Textarea);
   }
 } satisfies Theme

@@ -1,7 +1,4 @@
 <script setup>
-import CodeMirror from 'vue-codemirror6';
-import {ayuLight, dracula} from 'thememirror';
-
 import {onMounted, ref} from 'vue';
 import {ConsoleStdout, WASI} from "@bjorn3/browser_wasi_shim";
 
@@ -19,8 +16,6 @@ const autoFilteredEx = ref([]);
 const code = ref('');
 const output = ref('');
 const loading = ref(false);
-
-const themeExt = ref([ayuLight]);
 
 let wasmModule = null;
 const outputBuffer = ref('');
@@ -87,11 +82,6 @@ function generateArgs(algorithmCode, inputCode) {
     }
 }
 
-function load() {
-    loading.value = true;
-    setTimeout(() => (loading.value = false), 200);
-}
-
 onMounted(() => {
     algorithms.value = [
         { name: 'Algorithm W', code: 'W' },
@@ -134,22 +124,6 @@ function handleExampleSelect(event) {
     code.value = selected.code;
   }
 }
-
-const updateCodeMirrorTheme = () => {
-  if (document.documentElement.classList.contains('dark')) {
-    themeExt.value = [dracula];
-  } else {
-    themeExt.value = [ayuLight];
-  }
-};
-
-onMounted(() => {
-  updateCodeMirrorTheme();
-  const observer = new MutationObserver(() => {
-    updateCodeMirrorTheme();
-  });
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-});
 </script>
 
 
@@ -171,7 +145,7 @@ onMounted(() => {
 
 <div class="flex flex-col gap-2 mb-2">
     <label>Input Program</label>
-    <code-mirror v-model="code" :extensions="themeExt" basic></code-mirror>
+    <Textarea v-model="code" class="code" rows="2" spellcheck="false"/>
     <div class="flex justify-end mb-4">
         <Button :loading="loading" icon="pi pi-caret-right" label="Infer" type="button" @click="infer"/>
     </div>
@@ -179,5 +153,5 @@ onMounted(() => {
 
 <div class="flex flex-col gap-2 mb-4">
     <label>Inference Output</label>
-    <code-mirror v-model="output" :extensions="themeExt" :readonly="true" basic></code-mirror>
+    <pre>{{ output }}</pre>
 </div>
