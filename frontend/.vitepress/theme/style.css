@@ -140,3 +140,12 @@
 .DocSearch {
   --docsearch-primary-color: var(--vp-c-brand-1) !important;
 }
+
+.cm-content, .cm-gutter { min-height: 100px !important; }
+.cm-gutters { margin: 1px; }
+.cm-scroller { overflow: auto; }
+.cm-wrap { border: 1px solid silver }
+
+.output {
+  white-space: pre-wrap;
+}

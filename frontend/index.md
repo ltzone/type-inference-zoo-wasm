@@ -4,19 +4,15 @@ layout: home
 
 hero:
   name: "Type Inference Zoo"
-  # text: "Algorithm Collections"
-  tagline: My great project tagline
+  tagline: Explore with Type Inference Algorithms
   actions:
     - theme: brand
       text: Playground
       link: /playground
+    - theme: alt
+      text: Github Repo
+      link: https://github.com/cu1ch3n/type-inference-zoo
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
----
-
+  - title: Interactive Playground
+    details: Try out type inference examples and explore different algorithms in a static web interface.

@@ -1,12 +1,9 @@
----
-outline: page
----
-
 <script setup>
 import CodeMirror from 'vue-codemirror6';
 import {ayuLight, dracula} from 'thememirror';
 
-import { onMounted, ref } from 'vue';
+import {onMounted, ref} from 'vue';
+import {ConsoleStdout, WASI} from "@bjorn3/browser_wasi_shim";
 
 const algorithms = ref(null);
 const selectedAlgorithm = ref(null);
@@ -20,9 +17,75 @@ const selectedExample = ref(null);
 const autoFilteredEx = ref([]);
 
 const code = ref('');
+const output = ref('');
 const loading = ref(false);
 
 const themeExt = ref([ayuLight]);
+
+let wasmModule = null;
+const outputBuffer = ref('');
+
+async function loadWasmModule() {
+    if (!wasmModule) {
+        try {
+            const response = await fetch('/bin.wasm');
+            const bytes = await response.arrayBuffer();
+            wasmModule = await WebAssembly.compile(bytes);
+        } catch (error) {
+            console.error('WASM module loading failed:', error);
+            output.value = `WASM module loading failed: ${error.message}`;
+        }
+    }
+}
+
+async function runWasm(args) {
+    loading.value = true;
+    output.value = '';
+
+    try {
+        await loadWasmModule();
+
+        const env = [];
+        const fds = [
+            null, // stdin
+            ConsoleStdout.lineBuffered((msg) => {
+                outputBuffer.value += `${msg}\n`;
+            }),
+        ];
+
+        const wasi = new WASI(args, env, fds);
+        const instance = await WebAssembly.instantiate(wasmModule, {
+            wasi_snapshot_preview1: wasi.wasiImport,
+        });
+
+        wasi.start(instance);
+        output.value = outputBuffer.value;
+        outputBuffer.value = '';
+    } catch (error) {
+        console.error('error running WASM:', error);
+        output.value = `error running WASM: ${error.message}`;
+    } finally {
+        loading.value = false;
+    }
+}
+
+function infer() {
+    if (!selectedAlgorithm.value || !selectedAlgorithm.value.code) {
+        output.value = 'Please select an algorithm';
+        return;
+    }
+
+    const currentCode = code.value;
+    const args = generateArgs(selectedAlgorithm.value.code, currentCode);
+    runWasm(args);
+}
+
+function generateArgs(algorithmCode, inputCode) {
+    switch (algorithmCode) {
+        default:
+            return ['infer', '--alg', algorithmCode, inputCode];
+    }
+}
 
 function load() {
     loading.value = true;
@@ -47,7 +110,7 @@ function searchAlgorithm(event) {
         autoFilteredAlg.value = algorithms.value.filter((alg) => {
             return alg.name.toLowerCase().startsWith(event.query.toLowerCase());
         });
-    };
+    }
 }
 
 function searchExample(event) {
@@ -57,7 +120,7 @@ function searchExample(event) {
         autoFilteredEx.value = examples.value.filter((ex) => {
             return ex.name.toLowerCase().startsWith(event.query.toLowerCase());
         });
-    };
+    }
 }
 
 function handleExampleSelect(event) {
@@ -85,19 +148,33 @@ onMounted(() => {
 </script>
 
 
-<div class="flex flex-wrap items-start gap-4 mb-4">
+<div class="flex flex-col gap-2 mb-4">
+    <label>Type Inference Algorithm</label>
     <AutoComplete v-model="selectedAlgorithm" :suggestions="autoFilteredAlg" optionLabel="name"
         placeholder="Select Algorithm" dropdown display="chip" @complete="searchAlgorithm($event)" />
-    <SelectButton v-model="selectButtonValue" :options="selectButtonValues" optionLabel="name" />
 </div>
 
-<div class="flex flex-wrap items-start gap-4 mb-4">
-    <AutoComplete v-model="selectedExample" :suggestions="autoFilteredEx" optionLabel="name"
-        placeholder="Load Example Program" dropdown display="chip" @complete="searchExample($event)"
-        @option-select="handleExampleSelect" />
-    <Button type="button" label="Infer" icon="pi pi-caret-right" :loading="loading" @click="load" />
+<div class="flex flex-col gap-2 mb-2">
+    <label>Example Program</label>
+    <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+        <AutoComplete v-model="selectedExample" :suggestions="autoFilteredEx" display="chip"
+                      dropdown optionLabel="name" placeholder="(Optional) Load Example"
+                      @complete="searchExample($event)"
+                      @option-select="handleExampleSelect"/>
+    </div>
 </div>
 
-<div class="mt-2 mb-2">
+<div class="flex flex-col gap-2 mb-2">
+    <label>Code Editor</label>
+    <div class="">
     <code-mirror v-model="code" :extensions="themeExt" basic></code-mirror>
+    </div>
+    <div class="flex justify-end mb-4">
+        <Button :loading="loading" icon="pi pi-caret-right" label="Infer" type="button" @click="infer"/>
+    </div>
+</div>
+
+<div class="flex flex-col gap-2 mb-4">
+    <label>Inference Output</label>
+    <div>{{ output }}</div>
 </div>
