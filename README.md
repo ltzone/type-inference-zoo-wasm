@@ -1,6 +1,8 @@
 # Type Inference Zoo
 
+![Build Status](https://github.com/cu1ch3n/type-inference-zoo/actions/workflows/build.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
 
 Welcome to **Type Inference Zoo**! This project is dedicated to implementing a variety of type inference algorithms. It serves as a personal project, as I am trying to understand the type inference algorithms well by implmenting them. Considering that it might be helpful for those who are also exploring type inference algoreithms, I am glad to make them avaliable online.
 

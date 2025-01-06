@@ -16,5 +16,6 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/cu1ch3n/type-inference-zoo' }
     ]
-  }
+  },
+  cleanUrls: true
 })
