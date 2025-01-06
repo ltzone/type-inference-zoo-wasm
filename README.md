@@ -6,9 +6,9 @@
 
 Welcome to **Type Inference Zoo**! This project is dedicated to implementing a variety of type inference algorithms. It serves as a personal project, as I am trying to understand the type inference algorithms well by implmenting them. Considering that it might be helpful for those who are also exploring type inference algoreithms, I am glad to make them avaliable online.
 
-🗿🗿🗿 There are indeed animals (implementations) in the zoo, not only references to animals.
+🗿🗿🗿 There are indeed animals (**implementations**) in the zoo, not only references to animals.
 
-A static online web demo is coming soon, so stay tuned!
+A static online web demo is available for you to try at https://zoo.cuichen.cc/.
 
 ## 🚀 Get Started
 
