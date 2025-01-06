@@ -36,7 +36,7 @@ jobs:
       - name: Prepare website
         run: |
           cp -r frontend/.vitepress/dist site
-          cp ./dist-newstyle/build/wasm32-wasi/ghc-*/type-inference-zoo-0.1.0.0/x/type-inference-zoo-exe/opt/build/type-inference-zoo-exe/type-inference-zoo-exe.wasm site/bin.wasm
+          cp ./dist-newstyle/build/wasm32-wasi/ghc-*/type-inference-zoo-0.1.0.0/x/type-inference-zoo-exe/build/type-inference-zoo-exe/type-inference-zoo-exe.wasm site/bin.wasm
 
       - name: Upload Artifact for GitHub Pages
         uses: actions/upload-pages-artifact@v1
