@@ -36,6 +36,7 @@ library
       Alg.DK.Worklist.Elementary
       Alg.DK.Worklist.IU
       Alg.HDM
+      Alg.HDM.AlgR
       Alg.HDM.AlgW
       Alg.Local
       Alg.Local.Contextual
