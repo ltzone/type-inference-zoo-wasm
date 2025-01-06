@@ -170,10 +170,8 @@ onMounted(() => {
 </div>
 
 <div class="flex flex-col gap-2 mb-2">
-    <label>Code Editor</label>
-    <div class="">
+    <label>Input Program</label>
     <code-mirror v-model="code" :extensions="themeExt" basic></code-mirror>
-    </div>
     <div class="flex justify-end mb-4">
         <Button :loading="loading" icon="pi pi-caret-right" label="Infer" type="button" @click="infer"/>
     </div>
@@ -181,5 +179,5 @@ onMounted(() => {
 
 <div class="flex flex-col gap-2 mb-4">
     <label>Inference Output</label>
-    <div>{{ output }}</div>
+    <code-mirror v-model="output" :extensions="themeExt" :readonly="true" basic></code-mirror>
 </div>
