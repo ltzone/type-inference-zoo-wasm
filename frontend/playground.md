@@ -94,8 +94,13 @@ onMounted(() => {
         { name: 'Bidirectional Higher-Rank Polymorphism with Intersection and Union Types', code: 'IU' }
     ];
     examples.value = [
-        { name: 'most trivial', code: '(\\x. x) 1' },
+        { name: 'trivial application', code: '(\\x. x) 1' },
+        { name: 'let', code: 'let id = \\x. x in id 1' },
         { name: 'let-polymorphism', code: 'let id = \\x. x in (id 1, id True)' },
+        { name: 'higher-rank', code: '(\\f. \\x. f x) : (forall a. a -> a) -> Int -> Int' },
+        { name: 'higher-rank bounded', code: '(\\f. \\x. f x) : (forall (a <: Int). a -> a) -> Int -> Int' },
+        { name: 'explicit type application', code: '(/\\a. (\\x. x) : a -> a) @ (forall a. a -> a)' },
+        { name: 'intersection types', code: '(\\f. f True) : ((Int -> Int) & (Bool -> Bool)) -> Bool' },
     ];
 });
 
