@@ -88,7 +88,7 @@ trmBind c p = do
 
 tLamB :: Parser Trm
 tLamB = do
-  rword "/\\"
+  symbol "/\\"
   (x, b) <- idBound
   symbol "."
   e <- trm
