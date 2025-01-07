@@ -37,6 +37,7 @@ stack exec type-inference-zoo-exe -- "let id = \x. x in (id 1, id True)" --alg W
     [[Paper](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ECOOP.2022.2)]
 - [x] `R`: [`./src/Alg/HDM/AlgR.hs`](./src/Alg/HDM/AlgR.hs)
   - *Roger Bosman, Georgios Karachalias, Tom Schrijvers.* **No Unification Variable Left Behind: Fully Grounding Type Inference for the HDM System.** ITP 2023.
+    [[Paper](https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITP.2023.8)]
 - [x] `Bounded`: [`./src/Alg/DK/Worklist/Bounded.hs`](./src/Alg/DK/Worklist/Bounded.hs)
   - *Chen Cui, Shengyi Jiang, and Bruno C. d. S. Oliveira.* **Greedy Implicit Bounded Quantification.** OOPSLA 2023.
     [[Paper](https://dl.acm.org/doi/10.1145/3622871)]
