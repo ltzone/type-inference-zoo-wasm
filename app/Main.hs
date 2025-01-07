@@ -53,4 +53,10 @@ main = do
         Right tm -> case runContextual tm of
           Left err -> putStrLn err
           Right tree -> drawTree tree
+    (flags, [code], []) | Alg "R" `elem` flags -> do
+      case parseTrm code of
+        Left err -> putStrLn err
+        Right tm -> case runAlgR tm of
+          Left err -> putStrLn err
+          Right tree -> drawTree tree
     (_, _, errs) -> print errs

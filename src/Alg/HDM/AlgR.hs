@@ -2,16 +2,17 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Alg.HDM.AlgR () where
+module Alg.HDM.AlgR (runAlgR) where
 
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
+import Data.Bifunctor (bimap)
 import Data.Foldable (find)
 import Data.List (intercalate)
 import Data.Tree (Tree (Node))
-import Lib (InferMonad, freshTVar)
+import Lib (InferMonad, freshTVar, runInferMonad)
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), pattern TAll)
-import Unbound.Generics.LocallyNameless hiding (Subst)
+import Unbound.Generics.LocallyNameless
 
 type ExCtx = [TyVar]
 
@@ -34,10 +35,10 @@ instance Show TyCtxEntry where
   show (TVarBnd a) = show a
   show (ExCtx exCtx) = "(" ++ showExCtx exCtx ++ ")"
   show (VarBnd x ty) = show x ++ " : " ++ show ty
-  show (Invis exCtx ty) = showExCtxTyp exCtx ty
+  show (Invis exCtx ty) = "{" ++ showExCtxTyp exCtx ty ++ "}"
 
 instance {-# OVERLAPPING #-} Show TyCtx where
-  show = intercalate "; " . map show
+  show = intercalate "; " . map show . reverse
 
 mono :: Typ -> Bool
 mono (TVar _) = True
@@ -70,7 +71,7 @@ gen :: TyCtx -> Trm -> InferMonad (Typ, TyCtx, Tree String)
 gen tyCtx tm = do
   lift $ tell ["Generalizing: " ++ showInput]
   (exCtx, ty, tyCtx', tree) <- infer tyCtx tm
-  let ty' = foldl (\ty'' a -> TAll $ bind a ty'') ty exCtx
+  let ty' = foldl (\ty'' a -> TAll $ bind a (subst a (TVar a) ty'')) ty exCtx
   lift $ tell ["Generalized: " ++ showOutput ty' tyCtx']
   return (ty', tyCtx', Node ("Gen: " ++ showOutput ty' tyCtx') [tree])
   where
@@ -147,17 +148,90 @@ unify tyCtx tyEqs = do
       lift $ tell ["Unified[" ++ rule ++ "]: " ++ showOutput tyCtx']
       return (tyCtx', Node (rule ++ ": " ++ showOutput tyCtx') trees)
 
-unifySingleStep :: TyCtx -> TyEqs -> InferMonad (TyCtx, TyEqs)
-unifySingleStep = error "unifySingleStep: not implemented"
+substExCtx :: TyVar -> [TyVar] -> ExCtx -> Maybe ExCtx
+substExCtx _ _ [] = Nothing
+substExCtx a exVars (a' : exCtx)
+  | a == a' = Just $ exVars ++ exCtx
+  | otherwise = do
+      exCtx' <- substExCtx a exVars exCtx
+      return $ a' : exCtx'
 
--- unifySingleStep tyCtx tyEqs = case tyEqs of
---   (ty1, ty2) : tyEqs' -> do
---     lift $ tell ["UnifyingSingleStep: " ++ showInput]
---     case (ty1, ty2) of
---       (TInt, TInt) -> return (tyCtx, tyEqs')
---       (TBool, TBool) -> return (tyCtx, tyEqs')
---       (ETVar a, ETVar b) | a == b -> return (tyCtx, tyEqs')
---       (TArr ty1' ty2', TArr ty1'' ty2'') -> return (tyCtx, (ty1', ty1'') : (ty2', ty2'') : tyEqs')
---       (ETVar a, TArr _ _) -> do
---         a1 <- freshTVar
---         a2 <- freshTVar
+substTyCtx :: TyVar -> Typ -> [TyVar] -> TyCtx -> InferMonad TyCtx
+substTyCtx a ty exVars tyCtx = case tyCtx of
+  [] -> throwError $ show a ++ " is not found"
+  TVarBnd a' : tyCtx' -> do
+    tyCtx'' <- substTyCtx a ty exVars tyCtx'
+    return $ TVarBnd a' : tyCtx''
+  ExCtx exCtx : tyCtx' ->
+    case substExCtx a exVars exCtx of
+      Just exCtx' ->
+        return $ ExCtx exCtx' : tyCtx'
+      Nothing -> do
+        tyCtx'' <- substTyCtx a ty exVars tyCtx'
+        return $ ExCtx exCtx : tyCtx''
+  VarBnd x ty' : tyCtx' -> do
+    tyCtx'' <- substTyCtx a ty exVars tyCtx'
+    return $ VarBnd x (subst a ty ty') : tyCtx''
+  Invis exCtx ty' : tyCtx' -> do
+    case substExCtx a exVars exCtx of
+      Just exCtx' ->
+        return $ Invis exCtx' (subst a ty ty') : tyCtx'
+      Nothing -> do
+        tyCtx'' <- substTyCtx a ty exVars tyCtx'
+        return $ Invis exCtx (subst a ty ty') : tyCtx''
+
+substTyEqs :: TyVar -> Typ -> TyEqs -> TyEqs
+substTyEqs a ty = map (bimap (subst a ty) (subst a ty))
+
+before :: TyCtx -> TyVar -> TyVar -> Bool
+before tyCtx a b =
+  let (tyCtx1, _) = break (\case TVarBnd a' -> a == a'; _ -> False) tyCtx
+      (tyCtx1', _) = break (\case TVarBnd b' -> b == b'; _ -> False) tyCtx
+   in length tyCtx1 > length tyCtx1'
+
+unifySingleStep :: TyCtx -> TyEqs -> InferMonad (TyCtx, TyEqs)
+unifySingleStep tyCtx tyEqs = case tyEqs of
+  (ty1, ty2) : tyEqs' -> do
+    lift $ tell ["UnifyingSingleStep: " ++ showInput]
+    case (ty1, ty2) of
+      (TInt, TInt) -> return (tyCtx, tyEqs')
+      (TBool, TBool) -> return (tyCtx, tyEqs')
+      (ETVar a, ETVar b) | a == b -> return (tyCtx, tyEqs')
+      (TArr ty1' ty2', TArr ty1'' ty2'') -> return (tyCtx, (ty1', ty1'') : (ty2', ty2'') : tyEqs')
+      (ETVar a, TArr _ _) -> do
+        a1 <- freshTVar
+        a2 <- freshTVar
+        tyCtx' <- substTyCtx a (TArr (ETVar a1) (ETVar a2)) [a1, a2] tyCtx
+        return (tyCtx', substTyEqs a (TArr (ETVar a1) (ETVar a2)) tyEqs')
+      (TArr _ _, ETVar a) -> do
+        a1 <- freshTVar
+        a2 <- freshTVar
+        tyCtx' <- substTyCtx a (TArr (ETVar a1) (ETVar a2)) [a1, a2] tyCtx
+        return (tyCtx', substTyEqs a (TArr (ETVar a1) (ETVar a2)) tyEqs')
+      (ETVar a, ETVar b) | before tyCtx a b -> do
+        tyCtx' <- substTyCtx b (ETVar a) [] tyCtx
+        return (tyCtx', substTyEqs b (ETVar a) tyEqs')
+      (ETVar b, ETVar a) | before tyCtx a b -> do
+        tyCtx' <- substTyCtx b (ETVar a) [] tyCtx
+        return (tyCtx', substTyEqs b (ETVar a) tyEqs')
+      (ETVar a, TInt) -> do
+        tyCtx' <- substTyCtx a TInt [] tyCtx
+        return (tyCtx', substTyEqs a TInt tyEqs')
+      (TInt, ETVar a) -> do
+        tyCtx' <- substTyCtx a TInt [] tyCtx
+        return (tyCtx', substTyEqs a TInt tyEqs')
+      (ETVar a, TBool) -> do
+        tyCtx' <- substTyCtx a TBool [] tyCtx
+        return (tyCtx', substTyEqs a TBool tyEqs')
+      (TBool, ETVar a) -> do
+        tyCtx' <- substTyCtx a TBool [] tyCtx
+        return (tyCtx', substTyEqs a TBool tyEqs')
+      _ -> throwError $ "No rule matching: " ++ showInput
+  [] -> throwError "Impossible"
+  where
+    showInput = show tyCtx ++ " |- " ++ showTyEqs tyEqs
+
+runAlgR :: Trm -> Either String (Tree String)
+runAlgR tm = case runInferMonad $ infer [] tm of
+  Left err -> Left $ intercalate "\n" err
+  Right ((_, _, _, tree), _) -> Right tree

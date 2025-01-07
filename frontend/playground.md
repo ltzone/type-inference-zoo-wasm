@@ -88,6 +88,7 @@ onMounted(() => {
         { name: 'Complete and Easy Bidirectional Typechecking for Higher-rank Polymorphism', code: 'DK' },
         { name: 'A Mechanical Formalization of Higher-Ranked Polymorphic Type Inference', code: 'Worklist' },
         { name: 'Elementary Type Inference', code: 'Elementary' },
+        { name: 'Fully Grounding Type Inference for the HDM System', code: 'R' },
         { name: 'Greedy Implicit Bounded Quantification', code: 'Bounded' },
         { name: 'Contextual Typing', code: 'Contextual' },
         { name: 'Bidirectional Higher-Rank Polymorphism with Intersection and Union Types', code: 'IU' }
