@@ -130,6 +130,11 @@ function handleExampleSelect(event) {
     code.value = selected.code;
   }
 }
+
+function handleCodeChange(event) {
+  code.value = event.target.value;
+  selectedExample.value = null;
+}
 </script>
 
 
@@ -151,7 +156,7 @@ function handleExampleSelect(event) {
 
 <div class="flex flex-col gap-2 mb-4">
     <label>Input Program</label>
-    <Textarea v-model="code" class="code" rows="2" spellcheck="false"/>
+    <Textarea v-model="code" class="code" rows="2" spellcheck="false" @input="handleCodeChange"/>
     <div class="flex justify-end mb-4">
         <Button :loading="loading" icon="pi pi-caret-right" label="Infer" type="button" @click="infer"/>
     </div>
