@@ -78,7 +78,7 @@ function infer() {
 function generateArgs(algorithmCode, inputCode) {
     switch (algorithmCode) {
         default:
-            return ['infer', '--alg', algorithmCode, inputCode];
+            return ['infer', '--html', '--alg', algorithmCode, inputCode];
     }
 }
 
@@ -135,7 +135,58 @@ function handleCodeChange(event) {
   code.value = event.target.value;
   selectedExample.value = null;
 }
+
+function toggle(e) {
+  var node = e.srcElement == undefined ? e.target : e.srcElement;
+  var id = node.getAttribute("id");
+  var children = document.getElementById("children_" + id),
+    cstyle = window.getComputedStyle(children),
+    cdispay = cstyle.getPropertyValue("display");
+  if (cdispay == "inline") {
+    document.getElementById("children_" + id).className = "hidden";
+    document.getElementById(id).className = "node interactive collapsed";
+  } else {
+    document.getElementById("children_" + id).className = "shown";
+    document.getElementById(id).className = "node interactive expanded";
+  }
+}
+
+window.toggle = toggle;
 </script>
+
+<style>
+  .node {
+  }
+
+  .interactive:hover {
+    background-color: #CCC;
+  }
+
+  .collapsed {
+    cursor: pointer;
+    color: grey;
+    font-weight: bold;
+  }
+
+  .expanded {
+    cursor: pointer;
+    color: #009;
+    font-weight: bold;
+  }
+
+  .fixed {
+    position: static !important;
+    color: black;
+  }
+
+  .shown {
+    display: inline;
+  }
+
+  .hidden {
+    display: none;
+  }
+</style>
 
 
 <div class="flex flex-col gap-2 mb-4">
@@ -164,5 +215,5 @@ function handleCodeChange(event) {
 
 <div class="flex flex-col gap-2 mb-4">
     <label>Inference Output</label>
-    <pre class="output">{{ output }}</pre>
+    <pre class="output" v-html="output"></pre>
 </div>

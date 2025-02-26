@@ -1,62 +1,43 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Main (main) where
 
 import Alg
-import Data.Tree.View (drawTree)
+import Data.Foldable (find)
+import Data.Tree.View (showTree)
 import Opt (Option (..), options)
 import Parser (parseTrm)
-import System.Console.GetOpt
+import Print (showTreeHtml, toNodeInfoTree)
+import Syntax (Trm)
+import System.Console.GetOpt (ArgOrder (Permute), getOpt)
 import System.Environment (getArgs)
+
+runAlg :: Bool -> String -> Trm -> String
+runAlg html algName = case algName of
+  "W" -> outTree runAlgW
+  "DK" -> outTree runDK
+  "Worklist" -> outStr runWorklist
+  "Elementary" -> outStr runElementary
+  "Bounded" -> outStr runBounded
+  "IU" -> outStr runIU
+  "Contextual" -> outTree runContextual
+  "R" -> outTree runAlgR
+  _ -> error $ "Invalid algorithm: " ++ algName
+  where
+    outStr alg tm = case alg tm of
+      Left err -> unlines err
+      Right msgs -> unlines msgs
+    outTree alg tm = case alg tm of
+      Left err -> err
+      Right tree -> (if html then showTreeHtml . toNodeInfoTree else showTree) tree
 
 main :: IO ()
 main = do
   args <- getArgs
   case getOpt Permute options args of
-    (flags, [code], []) | Alg "W" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runAlgW tm of
-          Left err -> putStrLn err
-          Right tree -> drawTree tree
-    (flags, [code], []) | Alg "DK" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runDK tm of
-          Left err -> putStrLn err
-          Right tree -> drawTree tree
-    (flags, [code], []) | Alg "Worklist" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runWorklist tm of
-          Left errs -> putStrLn $ unlines errs
-          Right msgs -> putStrLn $ unlines msgs
-    (flags, [code], []) | Alg "Elementary" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runElementary tm of
-          Left errs -> putStrLn $ unlines errs
-          Right msgs -> putStrLn $ unlines msgs 
-    (flags, [code], []) | Alg "Bounded" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runBounded tm of
-          Left errs -> putStrLn $ unlines errs
-          Right msgs -> putStrLn $ unlines msgs 
-    (flags, [code], []) | Alg "IU" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runIU tm of
-          Left errs -> putStrLn $ unlines errs
-          Right msgs -> putStrLn $ unlines msgs
-    (flags, [code], []) | Alg "Contextual" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runContextual tm of
-          Left err -> putStrLn err
-          Right tree -> drawTree tree
-    (flags, [code], []) | Alg "R" `elem` flags -> do
-      case parseTrm code of
-        Left err -> putStrLn err
-        Right tm -> case runAlgR tm of
-          Left err -> putStrLn err
-          Right tree -> drawTree tree
+    (flags, [code], [])
+      | Just (Alg algName) <- find (\case Alg _ -> True; _ -> False) flags -> do
+          case parseTrm code of
+            Left err -> putStrLn err
+            Right tm -> putStrLn $ runAlg (Html `elem` flags) algName tm
     (_, _, errs) -> print errs

@@ -45,6 +45,7 @@ library
       Lib
       Opt
       Parser
+      Print
       Syntax
   other-modules:
       Paths_type_inference_zoo
