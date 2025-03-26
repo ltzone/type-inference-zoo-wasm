@@ -157,7 +157,7 @@ window.toggle = toggle;
 <style>
   .node {
   }
-
+/* 
   .interactive:hover {
     background-color: #CCC;
   }
@@ -178,7 +178,7 @@ window.toggle = toggle;
     position: static !important;
     color: black;
   }
-
+ */
   .shown {
     display: inline;
   }
