@@ -101,7 +101,7 @@ infer env ctx tm = do
     showInferIn = show env ++ " |- " ++ show ctx ++ " => " ++ show tm
 
     showInfer :: Typ -> String
-    showInfer ty = showInferIn ++ " : " ++ show ty
+    showInfer ty = showInferIn ++ " => " ++ show ty
 
     ret :: String -> Typ -> [Tree String] -> InferMonad (Typ, Tree String)
     ret rule ty trees = do
