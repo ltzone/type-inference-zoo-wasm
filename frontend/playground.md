@@ -78,7 +78,7 @@ function infer() {
 function generateArgs(algorithmCode, inputCode) {
     switch (algorithmCode) {
         default:
-            return ['infer', '--html', '--alg', algorithmCode, inputCode];
+            return ['infer', '--alg', algorithmCode, inputCode];
     }
 }
 
