@@ -111,7 +111,7 @@ algW env tm = do
       let ty' = gen (Map.map (apply s1) env) ty1
           env' = Map.insert x ty' env
       (s2, ty2, tree2) <- algW (Map.map (apply s1) env') tm2
-      ret "Let" (s1 `compSubst` s2) ty2 [tree1, tree2]
+      ret "Let" (s2 `compSubst` s1) ty2 [tree1, tree2]
     Tuple tms -> do
       (s, tys, trees) <-
         foldM
@@ -128,7 +128,7 @@ algW env tm = do
     showInput = showEnv env ++ " |- " ++ show tm
 
     showOutput :: Subst -> Typ -> String
-    showOutput _ ty = showInput ++ " : " ++ show ty -- ++ " with " ++ showSubst s
+    showOutput s ty = showInput ++ " : " ++ show ty ++ " with " ++ showSubst s
     ret :: String -> Subst -> Typ -> [Tree String] -> InferMonad (Subst, Typ, Tree String)
     ret rule s ty trees = do
       lift $ tell ["Infered[" ++ rule ++ "]: " ++ showOutput s ty]
