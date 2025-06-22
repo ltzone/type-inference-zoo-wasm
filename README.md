@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 
-Welcome to **Type Inference Zoo**! This project is dedicated to implementing a variety of type inference algorithms. It serves as a personal project, as I am trying to understand the type inference algorithms well by implmenting them. Considering that it might be helpful for those who are also exploring type inference algoreithms, I am glad to make them avaliable online.
+Welcome to **Type Inference Zoo**! This project is dedicated to implementing a variety of type inference algorithms. It serves as a personal project, as I am trying to understand the type inference algorithms well by implmenting them. Considering that it might be helpful for those who are also exploring type inference algorithms, I am glad to make them avaliable online.
 
 🗿🗿🗿 There are indeed animals (**implementations**) in the zoo, not only references to animals.
 
