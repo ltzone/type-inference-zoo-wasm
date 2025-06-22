@@ -16,7 +16,7 @@ type Parser = Parsec Void String
 parseTrm :: String -> Either String Trm
 parseTrm s =
   case runParser (whole trm) "" s of
-    Left err -> Left $ errorBundlePretty err
+    Left err -> Left $ "Parse error: " ++ errorBundlePretty err
     Right e -> Right e
 
 -- | Top-level parsers (should consume all input)
@@ -208,7 +208,7 @@ postfixChain p op = do
         <|> return x
 
 rws :: [String]
-rws = ["Int", "Bool", "let", "letrec", "in", "fix", "True", "False", "if", "then", "else"]
+rws = ["Int", "Bool", "let", "letrec", "in", "fix", "True", "False", "if", "then", "else", "forall", "Top", "Bot"]
 
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)
