@@ -147,7 +147,7 @@ instance Show PrimOp where
 showsPrecTrm :: Int -> Trm -> FreshM ShowS
 showsPrecTrm _ (LitInt i) = return $ shows i
 showsPrecTrm _ (LitBool b) = return $ shows b
-showsPrecTrm _ (Var x) = return $ shows x
+showsPrecTrm _ (Var x) = return $ showString (latexifyVar x)
 showsPrecTrm p (Lam bnd) = do
   (x, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
