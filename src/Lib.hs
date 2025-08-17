@@ -1,10 +1,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Lib (InferMonad, runInferMonad, freshTVar, break3) where
+module Lib (InferMonad, runInferMonad, freshTVar, break3, Derivation (..), InferResult (..), toJson) where
 
 import Control.Monad.RWS (MonadTrans (lift), RWST, get, put, runRWST)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
-import Syntax (TyVar)
+import Data.Aeson (ToJSON(..), encode, object, (.=))
+import qualified Data.Aeson.Key as Key
+import qualified Data.ByteString.Lazy.Char8 as L8
+import GHC.Generics (Generic)
+import Syntax (Typ, TyVar)
 import Unbound.Generics.LocallyNameless (FreshMT, runFreshMT)
 import Unbound.Generics.LocallyNameless.Fresh (Fresh (..))
 import Unbound.Generics.LocallyNameless.Name (s2n)
@@ -31,3 +35,34 @@ break3 :: (a -> Bool) -> [a] -> ([a], Maybe a, [a])
 break3 p xs = case break p xs of
   (ys, []) -> (ys, Nothing, [])
   (ys, z : zs) -> (ys, Just z, zs)
+
+data Derivation = Derivation
+  { ruleId :: String
+  , expression :: String
+  , children :: [Derivation]
+  }
+
+data InferResult = InferResult
+  { success :: Bool
+  , finalType :: Maybe String
+  , derivation :: [Derivation]
+  , errorMsg :: Maybe String
+  }
+
+instance ToJSON Derivation where
+  toJSON step = object
+    [ Key.fromString "ruleId" .= ruleId step  
+    , Key.fromString "expression" .= expression step
+    , Key.fromString "children" .= children step
+    ]
+
+instance ToJSON InferResult where
+  toJSON result = object
+    [ Key.fromString "success" .= success result
+    , Key.fromString "finalType" .= finalType result
+    , Key.fromString "derivation" .= derivation result
+    , Key.fromString "error" .= errorMsg result
+    ]
+
+toJson :: InferResult -> String
+toJson = L8.unpack . encode

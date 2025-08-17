@@ -91,37 +91,47 @@ instance Subst Trm Trm where
   isvar (Var v) = Just (SubstName v)
   isvar _ = Nothing
 
+latexifyVar :: Name a -> FreshM ShowS
+latexifyVar x = return $ showString $
+  case break (`elem` "0123456789") (show x) of
+    (x', "") -> x'
+    (x', n) -> x' ++ "_{" ++ n ++ "}"
+
 showsPrecTyp :: Int -> Typ -> FreshM ShowS
-showsPrecTyp _ TInt = return $ showString "Int"
-showsPrecTyp _ TBool = return $ showString "Bool"
-showsPrecTyp _ TTop = return $ showString "⊤"
-showsPrecTyp _ TBot = return $ showString "⊥"
-showsPrecTyp _ (TVar x) = return $ shows x
-showsPrecTyp _ (ETVar x) = return $ showString "^" . shows x
-showsPrecTyp _ (STVar x) = return $ showString "~" . shows x
+showsPrecTyp _ TInt = return $ showString "\\texttt{Int}"
+showsPrecTyp _ TBool = return $ showString "\\texttt{Bool}"
+showsPrecTyp _ TTop = return $ showString "\\top"
+showsPrecTyp _ TBot = return $ showString "\\bot"
+showsPrecTyp _ (TVar x) = latexifyVar x
+showsPrecTyp _ (ETVar x) = do
+  x' <- latexifyVar x
+  return $ showString "\\hat{" . x' . showString "}"
+showsPrecTyp _ (STVar x) = do
+  x' <- latexifyVar x
+  return $ showString "\\tilde{" . x' . showString "}"
 showsPrecTyp p (TArr a b) = do
   a' <- showsPrecTyp 1 a
   b' <- showsPrecTyp 0 b
-  return $ showParen (p > 0) $ a' . showString " -> " . b'
+  return $ showParen (p > 0) $ a' . showString " \\to " . b'
 showsPrecTyp p (TAll bnd) = do
   (x, t) <- unbind bnd
   t' <- showsPrecTyp 0 t
-  return $ showParen (p > 0) $ showString "∀" . shows x . showString ". " . t'
+  return $ showParen (p > 0) $ showString "\\forall " . shows x . showString ".~" . t'
 showsPrecTyp p (TAllB bnd b) = do
   (x, t) <- unbind bnd
   t' <- showsPrecTyp 0 t
   b' <- showsPrecTyp 0 b
-  return $ showParen (p > 0) $ showString "∀(" . shows x . showString " <: " . b' . showString "). " . t'
+  return $ showParen (p > 0) $ showString "\\forall(" . shows x . showString " \\le " . b' . showString ").~" . t'
 showsPrecTyp p (TIntersection a b) = do
   -- TODO: I am unsure about the number
   a' <- showsPrecTyp 1 a
   b' <- showsPrecTyp 1 b
-  return $ showParen (p > 0) $ a' . showString " & " . b'
+  return $ showParen (p > 0) $ a' . showString " \\land " . b'
 showsPrecTyp p (TUnion a b) = do
   -- TODO: I am unsure about the number
   a' <- showsPrecTyp 1 a
   b' <- showsPrecTyp 1 b
-  return $ showParen (p > 0) $ a' . showString " | " . b'
+  return $ showParen (p > 0) $ a' . showString " \\lor " . b'
 showsPrecTyp _ (TTuple ts) = do
   ts' <- mapM (showsPrecTyp 0) ts
   return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) ts' . showString ")"
@@ -132,8 +142,8 @@ instance Show Typ where
 showOp :: PrimOp -> ShowS
 showOp OpAdd = showString "+"
 showOp OpSub = showString "-"
-showOp OpMul = showString "*"
-showOp OpDiv = showString "/"
+showOp OpMul = showString "\\times "
+showOp OpDiv = showString "\\div "
 
 instance Show PrimOp where
   showsPrec _ = showParen True . showOp
@@ -145,23 +155,23 @@ showsPrecTrm _ (Var x) = return $ shows x
 showsPrecTrm p (Lam bnd) = do
   (x, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
-  return $ showParen (p > 0) $ showString "λ" . shows x . showString ". " . e'
+  return $ showParen (p > 0) $ showString "\\lambda " . shows x . showString ".~" . e'
 showsPrecTrm p (App e1 e2) = do
   e1' <- showsPrecTrm 9 e1
   e2' <- showsPrecTrm 10 e2
-  return $ showParen (p > 9) $ e1' . showString " " . e2'
+  return $ showParen (p > 9) $ e1' . showString "~" . e2'
 showsPrecTrm p (Ann e t) = do
   e' <- showsPrecTrm 1 e
   return $ showParen (p > 1) $ e' . showString " : " . shows t
 showsPrecTrm p (TLam bnd) = do
   (a, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
-  return $ showParen (p > 0) $ showString "Λ" . shows a . showString ". " . e'
+  return $ showParen (p > 0) $ showString "\\Lambda " . shows a . showString ".~" . e'
 showsPrecTrm p (TLamB bnd b) = do
   (a, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
   b' <- showsPrecTyp 0 b
-  return $ showParen (p > 0) $ showString "Λ(" . shows a . showString " <: " . b' . showString "). " . e'
+  return $ showParen (p > 0) $ showString "\\Lambda(" . shows a . showString " \\le " . b' . showString ").~" . e'
 showsPrecTrm p (TApp e t) = do
   e' <- showsPrecTrm 9 e
   t' <- showsPrecTyp 10 t
@@ -170,26 +180,26 @@ showsPrecTrm p (Let e1 bnd) = do
   (x, e2) <- unbind bnd
   e1' <- showsPrecTrm 0 e1
   e2' <- showsPrecTrm 0 e2
-  return $ showParen (p > 0) $ showString "let " . shows x . showString " = " . e1' . showString " in " . e2'
+  return $ showParen (p > 0) $ showString "\\texttt{let } " . shows x . showString " = " . e1' . showString " \\texttt{ in } " . e2'
 showsPrecTrm p (LetRec bnd) = do
   (x, (e1, e2)) <- unbind bnd
   e1' <- showsPrecTrm 0 e1
   e2' <- showsPrecTrm 0 e2
-  return $ showParen (p > 0) $ showString "letrec " . shows x . showString " = " . e1' . showString " in " . e2'
+  return $ showParen (p > 0) $ showString "\\texttt{letrec } " . shows x . showString " = " . e1' . showString " \\texttt{ in } " . e2'
 showsPrecTrm _ (Op op) = return $ shows op
 showsPrecTrm p (BinOp op e1 e2) | op `elem` [OpAdd, OpSub] = do
   e1' <- showsPrecTrm 6 e1
   e2' <- showsPrecTrm 7 e2
-  return $ showParen (p > 6) $ e1' . showString " " . showOp op . showString " " . e2'
+  return $ showParen (p > 6) $ e1' . showOp op . e2'
 showsPrecTrm p (BinOp op e1 e2) = do
   e1' <- showsPrecTrm 7 e1
   e2' <- showsPrecTrm 8 e2
-  return $ showParen (p > 7) $ e1' . showString " " . showOp op . showString " " . e2'
+  return $ showParen (p > 7) $ e1' . showOp op . e2'
 showsPrecTrm p (If e1 e2 e3) = do
   e1' <- showsPrecTrm 0 e1
   e2' <- showsPrecTrm 0 e2
   e3' <- showsPrecTrm 0 e3
-  return $ showParen (p > 0) $ showString "if " . e1' . showString " then " . e2' . showString " else " . e3'
+  return $ showParen (p > 0) $ showString "\\texttt{if } " . e1' . showString " \\texttt{ then } " . e2' . showString " \\texttt{ else } " . e3'
 showsPrecTrm _ (Tuple es) = do
   es' <- mapM (showsPrecTrm 0) es
   return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) es' . showString ")"

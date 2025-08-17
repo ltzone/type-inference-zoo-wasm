@@ -8,7 +8,6 @@ copyright:           "2025 Chen Cui"
 
 extra-source-files:
 - README.md
-- CHANGELOG.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -21,6 +20,8 @@ description:         Please see the README on GitHub at <https://github.com/cu1c
 
 dependencies:
 - base >= 4.7 && < 5
+- aeson
+- bytestring
 - containers
 - hspec
 - logict

@@ -1,10 +1,6 @@
 module Alg
-  ( module Alg.DK,
-    module Alg.HDM,
-    module Alg.Local,
+  ( module Alg.HM
   )
 where
 
-import Alg.DK
-import Alg.HDM
-import Alg.Local
+import Alg.HM

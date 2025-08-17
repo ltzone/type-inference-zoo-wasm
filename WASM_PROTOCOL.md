@@ -28,7 +28,7 @@ infer --alg <algorithm> <expression>
 - `IU` - Bidirectional with Intersection and Union Types
 
 ### Output Format
-Your WASI module should output to stdout in JSON format matching the InferenceResult interface:
+Your WASI module should output to stdout in JSON format matching the InferResult interface:
 
 **Required JSON Structure:**
 ```json
@@ -40,7 +40,7 @@ Your WASI module should output to stdout in JSON format matching the InferenceRe
       "id": "string (unique identifier)",
       "ruleId": "string (typing rule name)",
       "expression": "string (KaTeX expression)",
-      "children": "DerivationStep[] (optional, for tree view)"
+      "children": "Derivation[] (optional, for tree view)"
     }
   ],
   "error": "string (optional)"
