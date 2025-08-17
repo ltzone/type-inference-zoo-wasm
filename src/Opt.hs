@@ -7,6 +7,4 @@ data Option = Alg String | Html
 
 options :: [OptDescr Option]
 options =
-  [ Option [] ["alg"] (ReqArg Alg "ALG_NAME") "ALG_NAME",
-    Option [] ["html"] (NoArg Html) "Output HTML"
-  ]
+  [ Option [] ["alg"] (ReqArg Alg "ALG_NAME") "ALG_NAME" ]

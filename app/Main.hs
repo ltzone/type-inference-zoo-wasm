@@ -12,8 +12,8 @@ import Syntax (Trm)
 import System.Console.GetOpt (ArgOrder (Permute), getOpt)
 import System.Environment (getArgs)
 
-runAlg :: Bool -> String -> Trm -> String
-runAlg html algName = case algName of
+runAlg :: String -> Trm -> String
+runAlg algName = case algName of
   "W" -> outTree runAlgW
   "DK" -> outTree runDK
   "Worklist" -> outStr runWorklist
@@ -29,7 +29,7 @@ runAlg html algName = case algName of
       Right msgs -> unlines msgs
     outTree alg tm = case alg tm of
       Left err -> err
-      Right tree -> (if html then showTreeHtml . toNodeInfoTree else showTree) tree
+      Right tree -> showTree tree
 
 main :: IO ()
 main = do
@@ -39,5 +39,5 @@ main = do
       | Just (Alg algName) <- find (\case Alg _ -> True; _ -> False) flags -> do
           case parseTrm code of
             Left err -> putStrLn err
-            Right tm -> putStrLn $ runAlg (Html `elem` flags) algName tm
+            Right tm -> putStrLn $ runAlg algName tm
     (_, _, errs) -> print errs
