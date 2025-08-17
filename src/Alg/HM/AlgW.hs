@@ -75,7 +75,7 @@ mgu ty1 ty2 = do
 varBind :: TyVar -> Typ -> InferMonad Subst
 varBind a ty
   | aeq ty (TVar a) = return nullSubst
-  | a `elem` toListOf fv ty = throwError $ show (latexifyVar a) ++ " \\text{ occurs in } " ++ show ty
+  | a `elem` toListOf fv ty = throwError $ latexifyVar a ++ " \\text{ occurs in } " ++ show ty
   | otherwise = return $ Map.singleton a ty
 
 algW :: Env -> Trm -> InferMonad (Subst, Typ, Derivation)
@@ -85,7 +85,7 @@ algW env tm = do
     LitInt _ -> ret "LitInt" nullSubst TInt []
     LitBool _ -> ret "LitBool" nullSubst TBool []
     Var x -> case Map.lookup x env of
-      Nothing -> throwError $ "\\text{unbound variable } " ++ show (latexifyVar x)
+      Nothing -> throwError $ "\\text{unbound variable } " ++ latexifyVar x
       Just poly -> do
         mono <- inst poly
         ret "Var" nullSubst mono []
