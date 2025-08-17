@@ -91,8 +91,8 @@ instance Subst Trm Trm where
   isvar (Var v) = Just (SubstName v)
   isvar _ = Nothing
 
-latexifyVar :: Name a -> FreshM ShowS
-latexifyVar x = return $ showString $
+latexifyVar :: Name a -> String
+latexifyVar x =
   case break (`elem` "0123456789") (show x) of
     (x', "") -> x'
     (x', n) -> x' ++ "_{" ++ n ++ "}"
@@ -102,13 +102,9 @@ showsPrecTyp _ TInt = return $ showString "\\texttt{Int}"
 showsPrecTyp _ TBool = return $ showString "\\texttt{Bool}"
 showsPrecTyp _ TTop = return $ showString "\\top"
 showsPrecTyp _ TBot = return $ showString "\\bot"
-showsPrecTyp _ (TVar x) = latexifyVar x
-showsPrecTyp _ (ETVar x) = do
-  x' <- latexifyVar x
-  return $ showString "\\hat{" . x' . showString "}"
-showsPrecTyp _ (STVar x) = do
-  x' <- latexifyVar x
-  return $ showString "\\tilde{" . x' . showString "}"
+showsPrecTyp _ (TVar x) = return $ showString $ latexifyVar x
+showsPrecTyp _ (ETVar x) = return $ showString $ "\\hat{" ++ latexifyVar x ++ "}"
+showsPrecTyp _ (STVar x) = return $ showString $ "\\tilde{" ++ latexifyVar x ++ "}"
 showsPrecTyp p (TArr a b) = do
   a' <- showsPrecTyp 1 a
   b' <- showsPrecTyp 0 b
@@ -116,12 +112,12 @@ showsPrecTyp p (TArr a b) = do
 showsPrecTyp p (TAll bnd) = do
   (x, t) <- unbind bnd
   t' <- showsPrecTyp 0 t
-  return $ showParen (p > 0) $ showString "\\forall " . shows x . showString ".~" . t'
+  return $ showParen (p > 0) $ showString "\\forall " . showString (latexifyVar x) . showString ".~" . t'
 showsPrecTyp p (TAllB bnd b) = do
   (x, t) <- unbind bnd
   t' <- showsPrecTyp 0 t
   b' <- showsPrecTyp 0 b
-  return $ showParen (p > 0) $ showString "\\forall(" . shows x . showString " \\le " . b' . showString ").~" . t'
+  return $ showParen (p > 0) $ showString "\\forall(" . showString (latexifyVar x) . showString " \\le " . b' . showString ").~" . t'
 showsPrecTyp p (TIntersection a b) = do
   -- TODO: I am unsure about the number
   a' <- showsPrecTyp 1 a
@@ -155,7 +151,7 @@ showsPrecTrm _ (Var x) = return $ shows x
 showsPrecTrm p (Lam bnd) = do
   (x, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
-  return $ showParen (p > 0) $ showString "\\lambda " . shows x . showString ".~" . e'
+  return $ showParen (p > 0) $ showString "\\lambda " . showString (latexifyVar x) . showString ".~" . e'
 showsPrecTrm p (App e1 e2) = do
   e1' <- showsPrecTrm 9 e1
   e2' <- showsPrecTrm 10 e2
@@ -166,12 +162,12 @@ showsPrecTrm p (Ann e t) = do
 showsPrecTrm p (TLam bnd) = do
   (a, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
-  return $ showParen (p > 0) $ showString "\\Lambda " . shows a . showString ".~" . e'
+  return $ showParen (p > 0) $ showString "\\Lambda " . showString (latexifyVar a) . showString ".~" . e'
 showsPrecTrm p (TLamB bnd b) = do
   (a, e) <- unbind bnd
   e' <- showsPrecTrm 0 e
   b' <- showsPrecTyp 0 b
-  return $ showParen (p > 0) $ showString "\\Lambda(" . shows a . showString " \\le " . b' . showString ").~" . e'
+  return $ showParen (p > 0) $ showString "\\Lambda(" . showString (latexifyVar a) . showString " \\le " . b' . showString ").~" . e'
 showsPrecTrm p (TApp e t) = do
   e' <- showsPrecTrm 9 e
   t' <- showsPrecTyp 10 t
