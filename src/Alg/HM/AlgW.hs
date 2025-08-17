@@ -39,7 +39,7 @@ gen env ty = foldl (\ty' x -> TAll $ bind x ty') ty ftv
 
 mgu :: Typ -> Typ -> InferMonad (Subst, Derivation)
 mgu ty1 ty2 = do
-  lift $ tell ["Unifying: " ++ show ty1 ++ " ~ " ++ show ty2]
+  lift $ tell [show ty1 ++ " \\sim " ++ show ty2]
   case (ty1, ty2) of
     (TArr ty1' ty1'', TArr ty2' ty2'') -> do
       (s1, drv1) <- mgu ty1' ty2'
@@ -59,7 +59,7 @@ mgu ty1 ty2 = do
             (nullSubst, [])
             (zip tys tys')
             >>= uncurry ret
-    _ -> throwError $ "cannot unify " ++ show ty1 ++ " with " ++ show ty2
+    _ -> throwError $ "\\text{cannot unify } " ++ show ty1 ++ " \\text{ with } " ++ show ty2
   where
     showInput :: String
     showInput = show ty1 ++ " \\sim " ++ show ty2
@@ -85,7 +85,7 @@ algW env tm = do
     LitInt _ -> ret "LitInt" nullSubst TInt []
     LitBool _ -> ret "LitBool" nullSubst TBool []
     Var x -> case Map.lookup x env of
-      Nothing -> throwError $ "unbound variable " ++ show x
+      Nothing -> throwError $ "\\text{unbound variable } " ++ show x
       Just poly -> do
         mono <- inst poly
         ret "Var" nullSubst mono []
@@ -118,7 +118,7 @@ algW env tm = do
           (nullSubst, [], [])
           tms
       ret "Tuple" s (TTuple tys) drvs
-    _ -> throwError "not implemented"
+    _ -> throwError $ "\\text{No rule matching } " ++ show tm
   where
     showInput :: String
     showInput = showEnv env ++ " \\vdash " ++ show tm
@@ -132,7 +132,7 @@ algW env tm = do
 
 runAlgW :: Trm -> InferResult
 runAlgW tm = case runInferMonad $ algW Map.empty tm of
-  Left [] -> InferResult False Nothing [] (Just "Unknown error")
+  Left [] -> InferResult False Nothing [] (Just "\\text{Unknown error}")
   Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err)
   Right ((_, ty, drv), _) -> InferResult True (Just $ show ty) [drv] Nothing
 
