@@ -14,7 +14,7 @@ import System.Environment (getArgs)
 runAlg :: String -> Trm -> String
 runAlg algName tm = case algName of
   "W" -> toJson $ runAlgW tm
-  _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid algorithm: " ++ algName)
+  _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid algorithm: " ++ algName) False
 
 main :: IO ()
 main = do
@@ -23,6 +23,6 @@ main = do
     (flags, [code], [])
       | Just (Alg algName) <- find (\case Alg _ -> True; _ -> False) flags -> do
           case parseTrm code of
-            Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err)
+            Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
             Right tm -> putStrLn $ runAlg algName tm
     (_, _, errs) -> print errs

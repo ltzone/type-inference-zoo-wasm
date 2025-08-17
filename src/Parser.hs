@@ -5,7 +5,7 @@ module Parser (parseTrm) where
 import Control.Monad (void)
 import Control.Monad.Combinators.Expr
 import Data.Void (Void)
-import Lib (InferResult (..), toJson)
+import Lib ()
 import Syntax
 import Text.Megaparsec
 import Text.Megaparsec.Char

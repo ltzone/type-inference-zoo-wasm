@@ -132,9 +132,9 @@ algW env tm = do
 
 runAlgW :: Trm -> InferResult
 runAlgW tm = case runInferMonad $ algW Map.empty tm of
-  Left [] -> InferResult False Nothing [] (Just "\\text{Unknown error}")
-  Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err)
-  Right ((_, ty, drv), _) -> InferResult True (Just $ show ty) [drv] Nothing
+  Left [] -> InferResult False Nothing [] (Just "\\text{Unknown error}") True
+  Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err) True
+  Right ((_, ty, drv), _) -> InferResult True (Just $ show ty) [drv] Nothing False
 
 showEnv :: Env -> String
 showEnv env = intercalate ", " $ map (\(x, ty) -> show x ++ ": " ++ show ty) (Map.toList env)

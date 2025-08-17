@@ -7,8 +7,8 @@ import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
 import Data.Aeson (ToJSON(..), encode, object, (.=))
 import qualified Data.Aeson.Key as Key
 import qualified Data.ByteString.Lazy.Char8 as L8
-import GHC.Generics (Generic)
-import Syntax (Typ, TyVar)
+import GHC.Generics ()
+import Syntax (TyVar)
 import Unbound.Generics.LocallyNameless (FreshMT, runFreshMT)
 import Unbound.Generics.LocallyNameless.Fresh (Fresh (..))
 import Unbound.Generics.LocallyNameless.Name (s2n)
@@ -47,6 +47,7 @@ data InferResult = InferResult
   , finalType :: Maybe String
   , derivation :: [Derivation]
   , errorMsg :: Maybe String
+  , errorLatex :: Bool
   }
 
 instance ToJSON Derivation where
@@ -62,6 +63,7 @@ instance ToJSON InferResult where
     , Key.fromString "finalType" .= finalType result
     , Key.fromString "derivation" .= derivation result
     , Key.fromString "error" .= errorMsg result
+    , Key.fromString "errorLatex" .= errorLatex result
     ]
 
 toJson :: InferResult -> String
