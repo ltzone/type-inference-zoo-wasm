@@ -23,6 +23,6 @@ main = do
     (flags, [code], [])
       | Just (Alg algName) <- find (\case Alg _ -> True; _ -> False) flags -> do
           case parseTrm code of
-            Left err -> putStrLn err
+            Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err)
             Right tm -> putStrLn $ runAlg algName tm
     (_, _, errs) -> print errs
