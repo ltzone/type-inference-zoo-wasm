@@ -80,7 +80,7 @@ varBind a ty
 
 algW :: Env -> Trm -> InferMonad (Subst, Typ, Derivation)
 algW env tm = do
-  lift $ tell ["Infering: " ++ showInput]
+  lift $ tell [showInput]
   case tm of
     LitInt _ -> ret "LitInt" nullSubst TInt []
     LitBool _ -> ret "LitBool" nullSubst TBool []
@@ -127,12 +127,13 @@ algW env tm = do
     showOutput s ty = showInput ++ " : " ++ show ty ++ ", " ++ showSubst s
     ret :: String -> Subst -> Typ -> [Derivation] -> InferMonad (Subst, Typ, Derivation)
     ret rule s ty drvs = do
-      lift $ tell ["Infered[" ++ rule ++ "]: " ++ showOutput s ty]
+      lift $ tell [showOutput s ty]
       return (s, ty, Derivation rule (showOutput s ty) drvs)
 
 runAlgW :: Trm -> InferResult
 runAlgW tm = case runInferMonad $ algW Map.empty tm of
-  Left errs -> InferResult False Nothing [] (Just $ intercalate "\n" errs)
+  Left [] -> InferResult False Nothing [] (Just "Unknown error")
+  Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err)
   Right ((_, ty, drv), _) -> InferResult True (Just $ show ty) [drv] Nothing
 
 showEnv :: Env -> String
