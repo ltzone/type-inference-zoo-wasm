@@ -62,10 +62,10 @@ mgu ty1 ty2 = do
     _ -> throwError $ "cannot unify " ++ show ty1 ++ " with " ++ show ty2
   where
     showInput :: String
-    showInput = show ty1 ++ " ~ " ++ show ty2
+    showInput = show ty1 ++ " \\sim " ++ show ty2
 
     showOutput :: Subst -> String
-    showOutput s = showInput ++ " ~> " ++ showSubst s
+    showOutput s = showInput ++ " \\leadsto " ++ showSubst s
 
     ret :: Subst -> [Derivation] -> InferMonad (Subst, Derivation)
     ret s drvs = do
