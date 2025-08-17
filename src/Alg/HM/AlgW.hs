@@ -9,7 +9,7 @@ import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Lib (InferMonad, InferResult (..), Derivation (..), freshTVar, runInferMonad)
-import Syntax (TmVar, Trm (..), TyVar, Typ (..), pattern TAll)
+import Syntax (TmVar, Trm (..), TyVar, Typ (..), pattern TAll, latexifyVar)
 import Unbound.Generics.LocallyNameless hiding (Subst)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
@@ -141,4 +141,4 @@ showEnv env = intercalate ", " $ map (\(x, ty) -> show x ++ ": " ++ show ty) (Ma
 showSubst :: Subst -> String
 showSubst s 
   | Map.null s = "\\emptyset"
-  | otherwise = "\\{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ show a) (Map.toList s)) ++ "\\}"
+  | otherwise = "\\{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ show (latexifyVar a)) (Map.toList s)) ++ "\\}"

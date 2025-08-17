@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Syntax (TyVar, TmVar, Typ (..), PrimOp (..), opTyp, Trm (..), pattern TAll, pattern TLam) where
+module Syntax (TyVar, TmVar, Typ (..), PrimOp (..), opTyp, Trm (..), pattern TAll, pattern TLam, latexifyVar) where
 
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
