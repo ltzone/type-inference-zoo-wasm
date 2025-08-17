@@ -3,13 +3,13 @@
 module Alg.HM.AlgW (runAlgW) where
 
 import Control.Monad (foldM)
-import Control.Monad.Except ( MonadError(throwError) )
+import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import Lib (InferMonad, InferResult (..), Derivation (..), freshTVar, runInferMonad)
-import Syntax (TmVar, Trm (..), TyVar, Typ (..), pattern TAll, latexifyVar)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad)
+import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll)
 import Unbound.Generics.LocallyNameless hiding (Subst)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
@@ -139,6 +139,6 @@ showEnv :: Env -> String
 showEnv env = intercalate ", " $ map (\(x, ty) -> show x ++ ": " ++ show ty) (Map.toList env)
 
 showSubst :: Subst -> String
-showSubst s 
+showSubst s
   | Map.null s = "\\emptyset"
   | otherwise = "\\{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ show (latexifyVar a)) (Map.toList s)) ++ "\\}"

@@ -1,5 +1,5 @@
 module Alg
-  ( module Alg.HM
+  ( module Alg.HM,
   )
 where
 

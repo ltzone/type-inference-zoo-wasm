@@ -4,7 +4,7 @@ module Main (main) where
 
 import Alg
 import Data.Foldable (find)
-import Lib (InferResult(..), toJson)
+import Lib (InferResult (..), toJson)
 import Opt (Option (..), options)
 import Parser (parseTrm)
 import Syntax (Trm)
