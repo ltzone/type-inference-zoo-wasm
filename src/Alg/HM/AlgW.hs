@@ -94,7 +94,7 @@ algW env tm = do
       a <- freshTVar
       let env' = env `Map.union` Map.singleton x (TVar a)
       (s1, ty1, drv) <- algW env' tm'
-      ret "Lam" s1 (TArr (apply s1 (TVar a)) ty1) [drv]
+      ret "Abs" s1 (TArr (apply s1 (TVar a)) ty1) [drv]
     App tm1 tm2 -> do
       a <- freshTVar
       (s1, ty1, drv1) <- algW env tm1
