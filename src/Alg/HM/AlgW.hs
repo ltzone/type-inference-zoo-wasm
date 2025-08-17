@@ -139,4 +139,6 @@ showEnv :: Env -> String
 showEnv env = intercalate ", " $ map (\(x, ty) -> show x ++ ": " ++ show ty) (Map.toList env)
 
 showSubst :: Subst -> String
-showSubst s = "\\{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ show a) (Map.toList s)) ++ "\\}"
+showSubst s 
+  | Map.null s = "\\emptyset"
+  | otherwise = "\\{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ show a) (Map.toList s)) ++ "\\}"
