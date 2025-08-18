@@ -14,6 +14,13 @@ import System.Environment (getArgs)
 runAlg :: String -> Trm -> String
 runAlg algName tm = case algName of
   "W" -> toJson $ runAlgW tm
+  "R" -> toJson $ runAlgR tm
+  "DK" -> toJson $ runDK tm
+  "Worklist" -> toJson $ runWorklist tm
+  "Elementary" -> toJson $ runElementary tm
+  "Bounded" -> toJson $ runBounded tm
+  "IU" -> toJson $ runIU tm
+  "Contextual" -> toJson $ runContextual tm
   _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid algorithm: " ++ algName) False
 
 main :: IO ()
