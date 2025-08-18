@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Syntax (TyVar, TmVar, Typ (..), PrimOp (..), opTyp, Trm (..), pattern TAll, pattern TLam, latexifyVar) where
+module Syntax (TyVar, TmVar, Typ (..), PrimOp (..), opTyp, Trm (..), pattern TAll, pattern TLam, latexifyVar, wrapVar) where
 
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
@@ -91,11 +91,18 @@ instance Subst Trm Trm where
   isvar (Var v) = Just (SubstName v)
   isvar _ = Nothing
 
+splitVar :: Name a -> (String, String)
+splitVar = break (`elem` "0123456789") . show
+
 latexifyVar :: Name a -> String
-latexifyVar x =
-  case break (`elem` "0123456789") (show x) of
-    (x', "") -> x'
-    (x', n) -> x' ++ "_{" ++ n ++ "}"
+latexifyVar x = case splitVar x of
+  (x', "") -> x'
+  (x', n) -> x' ++ "_{" ++ n ++ "}"
+
+wrapVar :: String -> Name a -> String
+wrapVar wrap x = case splitVar x of
+  (x', "") -> "\\" ++ wrap ++ "{" ++ x' ++ "}"
+  (x', n) -> "\\" ++ wrap ++ "{" ++ x' ++ "}_{" ++ n ++ "}}"
 
 showsPrecTyp :: Int -> Typ -> FreshM ShowS
 showsPrecTyp _ TInt = return $ showString "\\texttt{Int}"
@@ -103,8 +110,8 @@ showsPrecTyp _ TBool = return $ showString "\\texttt{Bool}"
 showsPrecTyp _ TTop = return $ showString "\\top"
 showsPrecTyp _ TBot = return $ showString "\\bot"
 showsPrecTyp _ (TVar x) = return $ showString $ latexifyVar x
-showsPrecTyp _ (ETVar x) = return $ showString $ "\\hat{" ++ latexifyVar x ++ "}"
-showsPrecTyp _ (STVar x) = return $ showString $ "\\tilde{" ++ latexifyVar x ++ "}"
+showsPrecTyp _ (ETVar x) = return $ showString $ wrapVar "hat" x
+showsPrecTyp _ (STVar x) = return $ showString $ wrapVar "tilde" x
 showsPrecTyp p (TArr a b) = do
   a' <- showsPrecTyp 1 a
   b' <- showsPrecTyp 0 b
@@ -119,12 +126,10 @@ showsPrecTyp p (TAllB bnd b) = do
   b' <- showsPrecTyp 0 b
   return $ showParen (p > 0) $ showString "\\forall(" . showString (latexifyVar x) . showString " \\le " . b' . showString ").~" . t'
 showsPrecTyp p (TIntersection a b) = do
-  -- TODO: I am unsure about the number
   a' <- showsPrecTyp 1 a
   b' <- showsPrecTyp 1 b
   return $ showParen (p > 0) $ a' . showString " \\land " . b'
 showsPrecTyp p (TUnion a b) = do
-  -- TODO: I am unsure about the number
   a' <- showsPrecTyp 1 a
   b' <- showsPrecTyp 1 b
   return $ showParen (p > 0) $ a' . showString " \\lor " . b'

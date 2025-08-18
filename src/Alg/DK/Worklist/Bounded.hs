@@ -23,7 +23,6 @@ import Unbound.Generics.LocallyNameless
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
 mono :: Worklist -> Typ -> Bool
--- TODO: we should be careful about the wildcard when extending more types
 mono _ TInt = True
 mono _ TBool = True
 mono ws (TArr ty1 ty2) = mono ws ty1 && mono ws ty2

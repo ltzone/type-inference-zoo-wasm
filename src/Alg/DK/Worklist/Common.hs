@@ -9,7 +9,7 @@ import Control.Monad.Error.Class (MonadError (throwError))
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
 import Lib (Derivation (..), InferMonad, InferResult (..), runInferMonad)
-import Syntax (TmVar, Trm, TyVar, Typ, latexifyVar)
+import Syntax (TmVar, Trm, TyVar, Typ, latexifyVar, wrapVar)
 import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, bind, fv, s2n, subst, unbind)
 import Unbound.Generics.LocallyNameless.Fresh (FreshM, runFreshM)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -113,10 +113,10 @@ instance {-# OVERLAPPING #-} Show [Entry] where
       ++ ", "
       ++ case b of
         TVarBind -> latexifyVar a
-        ETVarBind -> "\\hat{" ++ latexifyVar a ++ "}"
-        STVarBind -> "\\tilde{" ++ latexifyVar a ++ "}"
+        ETVarBind -> wrapVar "hat" a
+        STVarBind -> wrapVar "tilde" a
         TVarBBind t -> latexifyVar a ++ " \\le " ++ show t
-        STVarBBind t -> "\\tilde{" ++ latexifyVar a ++ "} \\le " ++ show t
+        STVarBBind t -> wrapVar "tilde" a ++ " \\le " ++ show t
   show (WVar x t : ws) = show ws ++ ", " ++ latexifyVar x ++ ": " ++ show t
   show (WJug c : ws) = show ws ++ " \\vdash " ++ show c
 

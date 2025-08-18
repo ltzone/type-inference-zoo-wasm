@@ -3,9 +3,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
--- TODO: This is a simplified version of the IU algorithm
--- The full version with logic programming and backtracking would be more complex
-
 module Alg.DK.Worklist.IU (runIU) where
 
 import Alg.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, initWL, runInfer, substWLOrd)
@@ -25,7 +22,6 @@ import Unbound.Generics.LocallyNameless
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
 notAll :: Typ -> Bool
--- TODO: we should be careful about the wildcard when extending more types
 notAll TInt = True
 notAll TBool = True
 notAll TTop = True
