@@ -9,7 +9,7 @@ import Control.Monad.Error.Class (MonadError (throwError))
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
 import Lib (Derivation (..), InferMonad, InferResult (..), runInferMonad)
-import Syntax (TmVar, Trm, TyVar, Typ, latexifyVar, wrapVar)
+import Syntax (TmVar, Trm, TyVar, Typ (..), latexifyVar, wrapVar)
 import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, bind, fv, s2n, subst, unbind)
 import Unbound.Generics.LocallyNameless.Fresh (FreshM, runFreshM)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -22,7 +22,7 @@ data Judgment
   | InfTApp Typ Typ (Bind TyVar Judgment)
   | Match Typ (Bind TyVar Judgment)
   | MatchUnion Typ Typ (Bind TyVar Judgment)
-  | End
+  | Out Typ
   deriving (Generic, Typeable)
 
 data TBind
@@ -104,7 +104,8 @@ runInfer infer ws = case runInferMonad $ infer "Init" ws of
   Right (drvs, _) -> InferResult True Nothing drvs Nothing False
 
 initWL :: Trm -> [Entry]
-initWL tm = [WJug (Inf tm (bind (s2n "_") End))]
+initWL tm = [WJug (Inf tm (bind t (Out (TVar t))))]
+  where t = (s2n "t")
 
 instance {-# OVERLAPPING #-} Show [Entry] where
   show [] = "\\cdot"
@@ -129,21 +130,21 @@ instance Show Judgment where
       showsPrecFresh _ (Inf e bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows e . showString " \\Rightarrow " . showString (latexifyVar x) . showString " " . j'
+        return $ shows e . showString " \\Rightarrow_{" . showString (latexifyVar x) . showString "}" . j'
       showsPrecFresh _ (InfApp t e bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t . showString " \\bullet " . shows e . showString " \\Rrightarrow " . showString (latexifyVar x) . showString " " . j'
+        return $ shows t . showString " \\bullet " . shows e . showString " \\Rrightarrow_{" . showString (latexifyVar x) . showString "}" . j'
       showsPrecFresh _ (InfTApp t1 t2 bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t1 . showString " @ " . shows t2 . showString " \\Rrightarrow " . showString (latexifyVar x) . showString " " . j'
+        return $ shows t1 . showString " @ " . shows t2 . showString " \\Rrightarrow_{" . showString (latexifyVar x) . showString "}" . j'
       showsPrecFresh _ (Match t bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t . showString " \\triangleright " . showString (latexifyVar x) . showString " " . j'
+        return $ shows t . showString " \\triangleright_{" . showString (latexifyVar x) . showString "}" . j'
       showsPrecFresh _ (MatchUnion t1 t2 bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t1 . showString " \\lor " . shows t2 . showString " \\triangleright " . showString (latexifyVar x) . showString " " . j'
-      showsPrecFresh _ End = return $ showString "\\text{End}"
+        return $ shows t1 . showString " \\lor " . shows t2 . showString " \\triangleright_{" . showString (latexifyVar x) . showString "}" . j'
+      showsPrecFresh _ (Out t) = return $ showString "\\text{Out}(" . shows t . showString ")"

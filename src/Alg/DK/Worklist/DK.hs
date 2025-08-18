@@ -108,9 +108,9 @@ infer rule ws = do
       ws'' <- substWL b TBool [] ws'
       drvs <- infer "SubInstETVar8" ws''
       ret "SubInstETVar8" drvs
-    WJug End : ws' -> do
-      drvs <- infer "End" ws'
-      ret "End" drvs
+    WJug (Out _) : ws' -> do
+      drvs <- infer "Out" ws'
+      ret "Out" drvs
     WJug (Chk tm (TAll bnd)) : ws' -> do
       (a, ty) <- unbind bnd
       let ws'' = WJug (Chk tm ty) : WTVar a TVarBind : ws'

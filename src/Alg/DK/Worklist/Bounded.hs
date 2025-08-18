@@ -137,9 +137,9 @@ infer rule ws = do
           let ws''' = WJug (Sub (TArr ty1 ty2) (TArr (ETVar a1) (ETVar a2))) : ws''
           drvs <- infer "SubSplitR" ws'''
           ret "SubSplitR" drvs
-    WJug End : ws' -> do
-      drvs <- infer "End" ws'
-      ret "End" drvs
+    WJug (Out _) : ws' -> do
+      drvs <- infer "Out" ws'
+      ret "Out" drvs
     WJug (Chk (Lam bnd) TTop) : ws' -> do
       (x, e) <- unbind bnd
       let ws'' = WJug (Chk e TTop) : WVar x TBot : ws'

@@ -127,9 +127,9 @@ infer rule ws = do
       let ws'' = WJug (Sub ty ty1) : ws'
       drvs <- infer "SubUnionL" ws''
       ret "SubUnionL" drvs
-    WJug End : ws' -> do
-      drvs <- infer "End" ws'
-      ret "End" drvs
+    WJug (Out _) : ws' -> do
+      drvs <- infer "Out" ws'
+      ret "Out" drvs
     WJug (Chk (Lam bnd) TTop) : ws' -> do
       (x, e) <- unbind bnd
       let ws'' = WJug (Chk e TTop) : WVar x TBot : ws'
