@@ -10,7 +10,7 @@ import Data.Bifunctor (bimap)
 import Data.Foldable (find)
 import Data.List (intercalate)
 import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad)
-import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll)
+import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll, wrapVar)
 import Unbound.Generics.LocallyNameless
 
 type ExCtx = [TyVar]
@@ -25,7 +25,7 @@ showExCtx :: ExCtx -> String
 showExCtx = intercalate ", " . map (\a -> wrapVar "hat" a) . reverse
 
 showExCtxTyp :: ExCtx -> Typ -> String
-showExCtxTyp [] _ = "[\\bullet]" ++ showty
+showExCtxTyp [] ty = "[\\bullet]" ++ show ty
 showExCtxTyp exCtx ty = "[" ++ showExCtx exCtx ++ "]" ++ show ty
 
 showTyEqs :: TyEqs -> String
