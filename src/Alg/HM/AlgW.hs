@@ -39,7 +39,7 @@ gen env ty = foldl (\ty' x -> TAll $ bind x ty') ty ftv
 
 mgu :: Typ -> Typ -> InferMonad (Subst, Derivation)
 mgu ty1 ty2 = do
-  lift $ tell [show ty1 ++ " \\sim " ++ show ty2]
+  lift $ tell ["\\text{Unifying: } " ++ showInput]
   case (ty1, ty2) of
     (TArr ty1' ty1'', TArr ty2' ty2'') -> do
       (s1, drv1) <- mgu ty1' ty2'
@@ -69,7 +69,7 @@ mgu ty1 ty2 = do
 
     ret :: Subst -> [Derivation] -> InferMonad (Subst, Derivation)
     ret s drvs = do
-      lift $ tell ["Unified: " ++ showOutput s]
+      lift $ tell ["\\text{Unified: } " ++ showOutput s]
       return (s, Derivation "Unify" (showOutput s) drvs)
 
 varBind :: TyVar -> Typ -> InferMonad Subst
@@ -80,7 +80,7 @@ varBind a ty
 
 algW :: Env -> Trm -> InferMonad (Subst, Typ, Derivation)
 algW env tm = do
-  lift $ tell [showInput]
+  lift $ tell ["\\text{Inferring: } " ++ showInput]
   case tm of
     LitInt _ -> ret "LitInt" nullSubst TInt []
     LitBool _ -> ret "LitBool" nullSubst TBool []
@@ -127,7 +127,7 @@ algW env tm = do
     showOutput s ty = showInput ++ " : " ++ show ty ++ ", " ++ showSubst s
     ret :: String -> Subst -> Typ -> [Derivation] -> InferMonad (Subst, Typ, Derivation)
     ret rule s ty drvs = do
-      lift $ tell [showOutput s ty]
+      lift $ tell ["\\text{Inferred: } " ++ showOutput s ty]
       return (s, ty, Derivation rule (showOutput s ty) drvs)
 
 runAlgW :: Trm -> InferResult
@@ -137,9 +137,9 @@ runAlgW tm = case runInferMonad $ algW Map.empty tm of
   Right ((_, ty, drv), _) -> InferResult True (Just $ show ty) [drv] Nothing False
 
 showEnv :: Env -> String
-showEnv env = intercalate ", " $ map (\(x, ty) -> show x ++ ": " ++ show ty) (Map.toList env)
+showEnv env = intercalate ", " $ map (\(x, ty) -> latexifyVar x ++ ": " ++ show ty) (Map.toList env)
 
 showSubst :: Subst -> String
 showSubst s
   | Map.null s = "\\emptyset"
-  | otherwise = "\\{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ show (latexifyVar a)) (Map.toList s)) ++ "\\}"
+  | otherwise = "\\{" ++ intercalate ", " (map (\(a, ty) -> show ty ++ " / " ++ latexifyVar a) (Map.toList s)) ++ "\\}"

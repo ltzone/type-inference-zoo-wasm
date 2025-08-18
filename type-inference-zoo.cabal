@@ -25,9 +25,22 @@ source-repository head
 library
   exposed-modules:
       Alg
+      Alg.DK
       Alg.DK.Common
+      Alg.DK.DK
+      Alg.DK.Worklist
+      Alg.DK.Worklist.Bounded
+      Alg.DK.Worklist.Common
+      Alg.DK.Worklist.DK
+      Alg.DK.Worklist.Elementary
+      Alg.DK.Worklist.IU
       Alg.HM
+      Alg.HM.AlgR
       Alg.HM.AlgW
+      Alg.Local
+      Alg.Local.Contextual
+      Alg.Local.Contextual.Contextual
+      Alg.Local.Local
       Lib
       Opt
       Parser

@@ -1,0 +1,3 @@
+module Alg.Local.Local where
+
+-- Empty module for now as the original was empty
