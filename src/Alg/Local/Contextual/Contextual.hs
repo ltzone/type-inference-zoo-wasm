@@ -35,9 +35,9 @@ instance {-# OVERLAPPING #-} Show [EnvEntry] where
 
 instance Show Ctx where
   show :: Ctx -> String
-  show CEmpty = "\\emptyset"
+  show CEmpty = "\\square"
   show (CTyp ty) = show ty
-  show (CConsTrm tm ctx) = "[" ++ show tm ++ "] \\mapsto " ++ show ctx
+  show (CConsTrm tm ctx) = "[" ++ show tm ++ "] \\leadsto " ++ show ctx
 
 genericConsumer :: Trm -> Bool
 genericConsumer (LitInt _) = True

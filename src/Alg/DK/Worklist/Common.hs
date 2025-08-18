@@ -134,11 +134,11 @@ instance Show Judgment where
       showsPrecFresh _ (InfApp t e bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t . showString " \\bullet " . shows e . showString " \\Rrightarrow_{" . showString (latexifyVar x) . showString "}" . j'
+        return $ shows t . showString " \\bullet " . shows e . showString " \\mathrel{\\mathrlap{\\Rightarrow}\\phantom{~}\\Rightarrow}_{" . showString (latexifyVar x) . showString "}" . j'
       showsPrecFresh _ (InfTApp t1 t2 bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j
-        return $ shows t1 . showString " @ " . shows t2 . showString " \\Rrightarrow_{" . showString (latexifyVar x) . showString "}" . j'
+        return $ shows t1 . showString " \\circ " . shows t2 . showString " \\mathrel{\\mathrlap{\\Rightarrow}\\phantom{~}\\Rightarrow}_{" . showString (latexifyVar x) . showString "}" . j'
       showsPrecFresh _ (Match t bnd) = do
         (x, j) <- unbind bnd
         j' <- showsPrecFresh 0 j

@@ -22,9 +22,10 @@ type TyCtx = [TyCtxEntry]
 type TyEqs = [(Typ, Typ)]
 
 showExCtx :: ExCtx -> String
-showExCtx = intercalate ", " . map (\a -> "\\hat{" ++ latexifyVar a ++ "}") . reverse
+showExCtx = intercalate ", " . map (\a -> wrapVar "hat" a) . reverse
 
 showExCtxTyp :: ExCtx -> Typ -> String
+showExCtxTyp [] _ = "[\\bullet]" ++ showty
 showExCtxTyp exCtx ty = "[" ++ showExCtx exCtx ++ "]" ++ show ty
 
 showTyEqs :: TyEqs -> String
