@@ -11,7 +11,7 @@ import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Data.List (intercalate)
 import Lib (Derivation (..), InferMonad, InferResult (..), break3, freshTVar, runInferMonad)
-import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll)
+import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, wrapVar, pattern TAll)
 import Unbound.Generics.LocallyNameless (bind, fv, subst, unbind)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
 
@@ -28,8 +28,8 @@ instance Show Entry where
   show :: Entry -> String
   show (VarBnd x ty) = latexifyVar x ++ ": " ++ show ty
   show (TVarBnd a) = latexifyVar a
-  show (ETVarBnd a) = "\\hat{" ++ latexifyVar a ++ "}"
-  show (SETVarBnd a ty) = "\\hat{" ++ latexifyVar a ++ "} = " ++ show ty
+  show (ETVarBnd a) = wrapVar "hat" a
+  show (SETVarBnd a ty) = wrapVar "hat" a ++ " = " ++ show ty
   show (Mark a) = "\\blacktriangleright " ++ latexifyVar a
 
 instance {-# OVERLAPPING #-} Show [Entry] where
