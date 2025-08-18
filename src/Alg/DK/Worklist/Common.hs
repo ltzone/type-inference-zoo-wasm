@@ -8,7 +8,7 @@ module Alg.DK.Worklist.Common where
 import Control.Monad.Error.Class (MonadError (throwError))
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
-import Lib (InferMonad, InferResult (..), runInferMonad)
+import Lib (Derivation (..), InferMonad, InferResult (..), runInferMonad)
 import Syntax (TmVar, Trm, TyVar, Typ, latexifyVar)
 import Unbound.Generics.LocallyNameless (Alpha, Bind, Subst, bind, fv, s2n, subst, unbind)
 import Unbound.Generics.LocallyNameless.Fresh (FreshM, runFreshM)
@@ -97,11 +97,11 @@ substWLOrdQuick move a ty ws = case ws of
 substWLOrd :: TyVar -> Typ -> Worklist -> InferMonad Worklist
 substWLOrd = substWLOrdQuick []
 
-runInfer :: (String -> Worklist -> InferMonad a) -> Worklist -> InferResult
+runInfer :: (String -> Worklist -> InferMonad [Derivation]) -> Worklist -> InferResult
 runInfer infer ws = case runInferMonad $ infer "Init" ws of
-  Left [] -> InferResult False Nothing [] (Just "\\text{Unknown error}") True
-  Left (err : drvs) -> InferResult False Nothing [] (Just err) True -- TODO: Convert debug messages to derivations if needed
-  Right (result, _) -> InferResult True Nothing [] Nothing False -- TODO: Extract type and derivation from result
+  Left [] -> InferResult False Nothing [] (Just "Unknown error") False
+  Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err) True
+  Right (drvs, _) -> InferResult True Nothing drvs Nothing False
 
 initWL :: Trm -> [Entry]
 initWL tm = [WJug (Inf tm (bind (s2n "_") End))]
