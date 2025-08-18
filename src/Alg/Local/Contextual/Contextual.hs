@@ -37,7 +37,7 @@ instance Show Ctx where
   show :: Ctx -> String
   show CEmpty = "\\square"
   show (CTyp ty) = show ty
-  show (CConsTrm tm ctx) = "[" ++ show tm ++ "] \\leadsto " ++ show ctx
+  show (CConsTrm tm ctx) = "\\boxed{" ++ show tm ++ "} \\leadsto " ++ show ctx
 
 genericConsumer :: Trm -> Bool
 genericConsumer (LitInt _) = True
