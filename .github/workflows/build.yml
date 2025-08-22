@@ -5,10 +5,11 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build WASM
+  prepare-deps:
+    name: Prepare Dependencies
     runs-on: ubuntu-latest
-
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.value }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,9 +19,71 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Install GHC-wasm and build
+      - name: Generate cache key
+        id: cache-key
+        run: |
+          echo "value=nix-${{ hashFiles('flake.lock') }}-${{ hashFiles('package.yaml', 'stack.yaml') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache Nix store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/nix
+            /nix
+          key: ${{ runner.os }}-${{ steps.cache-key.outputs.value }}
+          restore-keys: |
+            ${{ runner.os }}-nix-
+
+      - name: Pre-build GHC-wasm shell
+        run: |
+          export NIX_STORE_DIR=/nix/store
+          export NIX_STATE_DIR=/nix/var/nix
+          nix build .#devShells.default --no-link
+
+  build:
+    name: Build WASM
+    runs-on: ubuntu-latest
+    needs: prepare-deps
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Restore Nix cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/nix
+            /nix
+          key: ${{ runner.os }}-${{ needs.prepare-deps.outputs.cache-key }}
+
+      - name: Cache Cabal store
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cabal/store
+            ~/.cabal/packages
+            ~/.cabal/logs
+          key: ${{ runner.os }}-cabal-${{ hashFiles('package.yaml', 'stack.yaml') }}-${{ hashFiles('flake.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cabal-${{ hashFiles('package.yaml', 'stack.yaml') }}-
+            ${{ runner.os }}-cabal-
+
+      - name: Build with cached dependencies
         working-directory: .
-        run: nix develop --command bash -c "wasm32-wasi-cabal update && wasm32-wasi-cabal build"
+        run: |
+          export NIX_STORE_DIR=/nix/store
+          export NIX_STATE_DIR=/nix/var/nix
+          
+          nix develop --command bash -c "
+            wasm32-wasi-cabal update
+            wasm32-wasi-cabal build --dependencies-only
+            wasm32-wasi-cabal build
+          "
 
       - name: Prepare WASM binary
         run: |
