@@ -27,87 +27,90 @@ infer rule ws = do
   lift $ tell [show ws]
   case ws of
     [] -> ret rule []
+    WTVar _ ETVarBind : ws' -> do
+      drvs <- infer "GCExVar" ws'
+      ret "GCExVar" drvs
     WTVar _ _ : ws' -> do
-      drvs <- infer "GCTVar" ws'
-      ret "GCTVar" drvs
+      drvs <- infer "GCTyVar" ws'
+      ret "GCTyVar" drvs
     WVar _ _ : ws' -> do
       drvs <- infer "GCVar" ws'
       ret "GCVar" drvs
     WJug (Sub TInt TInt) : ws' -> do
-      drvs <- infer "SubReflInt" ws'
-      ret "SubReflInt" drvs
+      drvs <- infer "SUnit" ws'
+      ret "SUnit" drvs
     WJug (Sub TBool TBool) : ws' -> do
-      drvs <- infer "SubReflBool" ws'
-      ret "SubReflBool" drvs
+      drvs <- infer "SUnit" ws'
+      ret "SUnit" drvs
     WJug (Sub (TVar a) (TVar b)) : ws' | a == b -> do
-      drvs <- infer "SubReflTVar" ws'
-      ret "SubReflTVar" drvs
+      drvs <- infer "STyVar" ws'
+      ret "STyVar" drvs
     WJug (Sub (ETVar a) (ETVar b)) : ws' | a == b -> do
-      drvs <- infer "SubReflETVar" ws'
-      ret "SubReflETVar" drvs
+      drvs <- infer "SExVar" ws'
+      ret "SExVar" drvs
     WJug (Sub (TArr ty1 ty2) (TArr ty1' ty2')) : ws' -> do
       let ws'' = WJug (Sub ty1' ty1) : WJug (Sub ty2 ty2') : ws'
-      drvs <- infer "SubArr" ws''
-      ret "SubArr" drvs
+      drvs <- infer "SArr" ws''
+      ret "SArr" drvs
     WJug (Sub (TAll bnd) ty2) : ws' | not (isAll ty2) -> do
       (a, ty1) <- unbind bnd
       let ty1' = subst a (ETVar a) ty1
           ws'' = WJug (Sub ty1' ty2) : WTVar a ETVarBind : ws'
-      drvs <- infer "SubAllL" ws''
-      ret "SubAllL" drvs
+      drvs <- infer "SAllL" ws''
+      ret "SAllL" drvs
     WJug (Sub ty1 (TAll bnd)) : ws' -> do
       (a, ty2) <- unbind bnd
       let ws'' = WJug (Sub ty1 ty2) : WTVar a TVarBind : ws'
-      drvs <- infer "SubAllR" ws''
-      ret "SubAllR" drvs
+      drvs <- infer "SAllR" ws''
+      ret "SAllR" drvs
     WJug (Sub (ETVar a) ty@(TArr ty1 ty2)) : ws'
       | a `notElem` toListOf fv ty -> do
           a1 <- fresh a
           a2 <- fresh a
           ws'' <- substWL a (TArr (ETVar a1) (ETVar a2)) [WTVar a1 ETVarBind, WTVar a2 ETVarBind] ws'
           let ws''' = WJug (Sub (TArr (ETVar a1) (ETVar a2)) (TArr ty1 ty2)) : ws''
-          drvs <- infer "SubSplitL" ws'''
-          ret "SubSplitL" drvs
+          drvs <- infer "InstLArr" ws'''
+          ret "InstLArr" drvs
     WJug (Sub ty@(TArr ty1 ty2) (ETVar a)) : ws'
       | a `notElem` toListOf fv ty -> do
           a1 <- fresh a
           a2 <- fresh a
           ws'' <- substWL a (TArr (ETVar a1) (ETVar a2)) [WTVar a1 ETVarBind, WTVar a2 ETVarBind] ws'
           let ws''' = WJug (Sub (TArr ty1 ty2) (TArr (ETVar a1) (ETVar a2))) : ws''
-          drvs <- infer "SubSplitR" ws'''
-          ret "SubSplitR" drvs
+          drvs <- infer "InstRArr" ws'''
+          ret "InstRArr" drvs
     WJug (Sub (ETVar a) (ETVar b)) : ws' | before ws' a b -> do
       ws'' <- substWL b (ETVar a) [] ws'
-      drvs <- infer "SubInstETVar1" ws''
-      ret "SubInstETVar1" drvs
+      drvs <- infer "InstLSolve" ws''
+      ret "InstLSolve" drvs
     WJug (Sub (ETVar b) (ETVar a)) : ws' | before ws' a b -> do
       ws'' <- substWL b (ETVar a) [] ws'
-      drvs <- infer "SubInstETVar2" ws''
-      ret "SubInstETVar2" drvs
+      drvs <- infer "InstRSolve" ws''
+      ret "InstRSolve" drvs
     WJug (Sub (TVar a) (ETVar b)) : ws' | before ws' a b -> do
       ws'' <- substWL b (TVar a) [] ws'
-      drvs <- infer "SubInstETVar3" ws''
-      ret "SubInstETVar3" drvs
+      drvs <- infer "InstLReach" ws''
+      ret "InstLReach" drvs
     WJug (Sub (ETVar b) (TVar a)) : ws' | before ws' a b -> do
       ws'' <- substWL b (ETVar a) [] ws'
-      drvs <- infer "SubInstETVar4" ws''
-      ret "SubInstETVar4" drvs
+      drvs <- infer "InstRReach" ws''
+      ret "InstRReach" drvs
     WJug (Sub TInt (ETVar b)) : ws' -> do
       ws'' <- substWL b TInt [] ws'
-      drvs <- infer "SubInstETVar5" ws''
-      ret "SubInstETVar5" drvs
+      drvs <- infer "InstLUnit" ws''
+      ret "InstLUnit" drvs
     WJug (Sub (ETVar b) TInt) : ws' -> do
       ws'' <- substWL b TInt [] ws'
-      drvs <- infer "SubInstETVar6" ws''
-      ret "SubInstETVar6" drvs
+      drvs <- infer "InstRUnit" ws''
+      ret "InstRUnit" drvs
     WJug (Sub TBool (ETVar b)) : ws' -> do
       ws'' <- substWL b TBool [] ws'
-      drvs <- infer "SubInstETVar7" ws''
-      ret "SubInstETVar7" drvs
+      drvs <- infer "InstLUnit" ws''
+      ret "InstLUnit" drvs
     WJug (Sub (ETVar b) TBool) : ws' -> do
       ws'' <- substWL b TBool [] ws'
-      drvs <- infer "SubInstETVar8" ws''
-      ret "SubInstETVar8" drvs
+      drvs <- infer "InstRUnit" ws''
+      ret "InstRUnit" drvs
     WJug (Out _) : ws' -> do
       drvs <- infer "Out" ws'
       ret "Out" drvs
@@ -119,8 +122,8 @@ infer rule ws = do
     WJug (Chk (Lam bnd) (TArr ty1 ty2)) : ws' -> do
       (x, e) <- unbind bnd
       let ws'' = WJug (Chk e ty2) : WVar x ty1 : ws'
-      drvs <- infer "ChkLam" ws''
-      ret "ChkLam" drvs
+      drvs <- infer "ChkAbs" ws''
+      ret "ChkAbs" drvs
     WJug (Chk (Lam bnd) (ETVar a)) : ws' -> do
       (x, e) <- unbind bnd
       a1 <- fresh a
@@ -128,8 +131,8 @@ infer rule ws = do
       ws'' <-
         substWL a (TArr (ETVar a1) (ETVar a2)) [WTVar a1 ETVarBind, WTVar a2 ETVarBind] $
           WJug (Chk e (ETVar a2)) : WVar x (ETVar a1) : ws'
-      drvs <- infer "ChkLamSplit" ws''
-      ret "ChkLamSplit" drvs
+      drvs <- infer "ChkAbsExVar" ws''
+      ret "ChkAbsExVar" drvs
     WJug (Chk tm ty) : ws' -> do
       a <- freshTVar
       let ws'' = WJug (Inf tm (bind a (Sub (TVar a) ty))) : ws'
@@ -148,12 +151,12 @@ infer rule ws = do
       ret "InfAnn" drvs
     WJug (Inf (LitInt _) j) : ws' -> do
       let ws'' = WJug (substBind j TInt) : ws'
-      drvs <- infer "InfLitInt" ws''
-      ret "InfLitInt" drvs
+      drvs <- infer "InfUnit" ws''
+      ret "InfUnit" drvs
     WJug (Inf (LitBool _) j) : ws' -> do
       let ws'' = WJug (substBind j TBool) : ws'
-      drvs <- infer "InfLitBool" ws''
-      ret "InfLitBool" drvs
+      drvs <- infer "InfUnit" ws''
+      ret "InfUnit" drvs
     WJug (Inf (Lam bnd) j) : ws' -> do
       a <- freshTVar
       b <- freshTVar
@@ -164,8 +167,8 @@ infer rule ws = do
                    : WTVar a ETVarBind
                    : WTVar b ETVarBind
                    : ws'
-      drvs <- infer "InfLam" ws''
-      ret "InfLam" drvs
+      drvs <- infer "InfAbs" ws''
+      ret "InfAbs" drvs
     WJug (Inf (App tm1 tm2) j) : ws' -> do
       a <- freshTVar
       let ws'' = WJug (Inf tm1 (bind a (InfApp (TVar a) tm2 j))) : ws'
@@ -186,8 +189,8 @@ infer rule ws = do
       ws'' <-
         substWL a (TArr (ETVar a1) (ETVar a2)) [WTVar a1 ETVarBind, WTVar a2 ETVarBind] $
           WJug (InfApp (TArr (ETVar a1) (ETVar a2)) tm j) : ws'
-      drvs <- infer "InfAppETVar" ws''
-      ret "InfAppETVar" drvs
+      drvs <- infer "InfAppExVar" ws''
+      ret "InfAppExVar" drvs
     _ -> throwError $ "\\text{No matching rule for } " ++ show ws
   where
     ret :: String -> [Derivation] -> InferMonad [Derivation]
