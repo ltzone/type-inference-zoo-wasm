@@ -6,8 +6,8 @@ import Alg
 import Data.Foldable (find)
 import Lib (InferResult (..), toJson)
 import Opt (Option (..), options)
-import Parser (parseTrm)
-import Syntax (Trm)
+import Parser (parseTrm, parseTyp)
+import Syntax (Trm, Typ)
 import System.Console.GetOpt (ArgOrder (Permute), getOpt)
 import System.Environment (getArgs)
 
@@ -23,6 +23,12 @@ runAlg algName tm = case algName of
   "Contextual" -> toJson $ runContextual tm
   _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid algorithm: " ++ algName) False
 
+-- Mode switching function for subtyping algorithms (unified interface)
+runSubtyping :: String -> Typ -> Typ -> String
+runSubtyping mode sourceType targetType = case mode of
+  "recursive" -> toJson $ runRecursiveSubtyping sourceType targetType
+  _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid subtyping mode: " ++ mode) False
+
 main :: IO ()
 main = do
   args <- getArgs
@@ -32,4 +38,11 @@ main = do
           case parseTrm code of
             Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
             Right tm -> putStrLn $ runAlg algName tm
+    (flags, [source, target], [])
+      | Just (Subtyping mode) <- find (\case Subtyping _ -> True; _ -> False) flags -> do
+          case (parseTyp source, parseTyp target) of
+            (Left err, _) -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
+            (_, Left err) -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
+            (Right sourceType, Right targetType) ->
+              putStrLn $ runSubtyping mode sourceType targetType
     (_, _, errs) -> print errs

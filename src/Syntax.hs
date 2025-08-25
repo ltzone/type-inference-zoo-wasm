@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Syntax (TyVar, TmVar, Typ (..), PrimOp (..), opTyp, Trm (..), pattern TAll, pattern TLam, latexifyVar, wrapVar) where
+module Syntax (TyVar, TmVar, LabelVar, Typ (..), PrimOp (..), opTyp, Trm (..), pattern TAll, pattern TLam, latexifyVar, wrapVar) where
 
 import Data.Data (Typeable)
 import GHC.Generics (Generic)
@@ -11,6 +11,8 @@ import Unbound.Generics.LocallyNameless
 type TyVar = Name Typ
 
 type TmVar = Name Trm
+
+type LabelVar = Name Typ  -- New type for label variables
 
 data Typ
   = TInt
@@ -25,6 +27,14 @@ data Typ
   | TIntersection Typ Typ
   | TUnion Typ Typ
   | TTuple [Typ]
+
+  -- New type constructs for subtyping recursive types
+  | TRecursive (Bind TyVar Typ) -- mu a. A (source recursive type)
+  | TLabel TyVar Typ -- {l : A} (labeled type with free label)
+  | TLabeled LabelVar (Bind TyVar Typ) -- {l : a . A} (labeled type with locally bound label)
+  | TTranslatedMu (Bind (TyVar, LabelVar) Typ) -- [(a,l). A] (translated recursive type with bound type var and label)
+
+
   deriving (Generic, Typeable)
 
 pattern TAll :: Bind TyVar Typ -> Typ
@@ -136,6 +146,26 @@ showsPrecTyp p (TUnion a b) = do
 showsPrecTyp _ (TTuple ts) = do
   ts' <- mapM (showsPrecTyp 0) ts
   return $ showString "(" . foldr1 (\a b -> a . showString ", " . b) ts' . showString ")"
+
+
+-- Pretty printing for recursive types
+showsPrecTyp p (TLabel l a) = do
+  a' <- showsPrecTyp 0 a
+  return $ showParen (p > 0) $ showString "\\{ : " . showString (latexifyVar l) . a' . showString "\\}"
+showsPrecTyp p (TRecursive bnd) = do
+  (x, t) <- unbind bnd
+  t' <- showsPrecTyp 0 t
+  return $ showParen (p > 0) $ showString "\\mu " . showString (latexifyVar x) . showString ".~" . t'
+showsPrecTyp p (TLabeled l bnd) = do
+  (_, a) <- unbind bnd
+  a' <- showsPrecTyp 0 a
+  return $ showParen (p > 0) $ showString "\\{" . showString (latexifyVar l) . showString " : " . a' . showString "\\}"
+showsPrecTyp p (TTranslatedMu bnd) = do
+  ((a, l), body) <- unbind bnd
+  body' <- showsPrecTyp 0 body
+  return $ showParen (p > 0) $ showString "[(" . showString (latexifyVar a) . showString "," . showString (latexifyVar l) . showString "). " . body' . showString "]"
+-- End pretty printing for recursive types
+
 
 instance Show Typ where
   showsPrec prec ty = runFreshM $ showsPrecTyp prec ty
