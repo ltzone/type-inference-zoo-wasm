@@ -44,6 +44,8 @@ library
       Lib
       Opt
       Parser
+      Subtyping.Recursive
+      Subtyping.Recursive.Nominal
       Syntax
   other-modules:
       Paths_type_inference_zoo
