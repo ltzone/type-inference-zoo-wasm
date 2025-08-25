@@ -215,7 +215,9 @@ nominalSubDeriv source target = do
       a <- freshTVar
       let sUnf = subst sVar (TVar a) sBody
           tUnf = subst tVar (TVar a) tBody
-      (ok, d) <- nominalSubDeriv sUnf tUnf
+          sNUnf = subst sVar (TLabel a sUnf) sBody 
+          tNUnf = subst tVar (TLabel a tUnf) tBody
+      (ok, d) <- nominalSubDeriv sNUnf tNUnf
       return
         ( ok
         , Derivation
@@ -224,6 +226,31 @@ nominalSubDeriv source target = do
             , children = [d]
             }
         )
+
+    (TLabel slabel sty, TLabel rlabel rty) ->
+      if slabel == rlabel
+        then do
+          (ok, d) <- nominalSubDeriv sty rty
+          return
+            ( ok
+            , Derivation
+                { ruleId = "S-label"
+                , expression = show (TLabel slabel sty) ++ " <: " ++ show (TLabel rlabel rty)
+                , children = [d]
+                }
+            )
+        else
+          return
+            ( False
+            , Derivation
+                { ruleId = "S-fail"
+                , expression = "label mismatch: " ++ show (TLabel slabel sty) ++ " </: " ++ show (TLabel rlabel rty)
+                , children = []
+                }
+            )
+
+
+    -- the below two types should actually never appear in nominal subtyping
 
     -- Labeled recursive types: labels must match, then unfold together
     (TLabeled sLabel sBnd, TLabeled tLabel tBnd) ->
