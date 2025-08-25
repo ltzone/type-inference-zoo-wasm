@@ -25,15 +25,13 @@ runNominalSubtyping :: Typ -> Typ -> InferResult
 runNominalSubtyping source target =
   case runInferMonad $ do
     lift $ tell ["\\text{Recursive Subtyping: } " ++ show source ++ " <: " ++ show target]
-    -- Run the subtyping algorithm
-    result <- nominalSubtyping source target
-    -- Build derivation tree
-    deriv <- buildDerivation source target result
+    -- Run the subtyping algorithm producing a detailed derivation
+    (result, drv) <- nominalSubDeriv source target
     return $ SubtypingResult
       { isSubtype = result
       , sourceType = source
       , targetType = target
-      , subtypingDerivation = deriv
+      , subtypingDerivation = [drv]
       , subtypingErrorMsg = Nothing
       }
   of
@@ -50,7 +48,7 @@ runNominalSubtyping source target =
 -- Core recursive subtyping algorithm
 nominalSubtyping :: Typ -> Typ -> InferMonad Bool
 nominalSubtyping source target = do
-  lift $ tell ["\\text{Checking: } " ++ show source ++ " <: " ++ show target]
+  -- lift $ tell ["\\text{Checking: } " ++ show source ++ " <: " ++ show target]
   
   case (source, target) of
     -- Base cases
@@ -138,18 +136,158 @@ nominalSubtyping source target = do
       lift $ tell ["\\text{No rule applies: } " ++ show source ++ " <: " ++ show target ++ " = \\text{false}"]
       return False
 
--- Build derivation tree for subtyping
+-- Build derivation tree and decision simultaneously
+nominalSubDeriv :: Typ -> Typ -> InferMonad (Bool, Derivation)
+nominalSubDeriv source target = do
+  lift $ tell ["\\text{Derive: } " ++ show source ++ " <: " ++ show target]
+  case (source, target) of
+    -- Top
+    (_, TTop) ->
+      return
+        ( True
+        , Derivation { ruleId = "S-top", expression = show source ++ " <: \\top", children = [] }
+        )
+
+    -- Refl on base types
+    (TInt, TInt) ->
+      return (True, Derivation { ruleId = "S-int", expression = "Int <: Int", children = [] })
+    (TBool, TBool) ->
+      return (True, Derivation { ruleId = "S-bool", expression = "Bool <: Bool", children = [] })
+
+    -- Type variables
+    (TVar v1, TVar v2) ->
+      let ok = v1 == v2
+       in return
+            ( ok
+            , Derivation
+                { ruleId = "S-var"
+                , expression = show (TVar v1) ++ " <: " ++ show (TVar v2)
+                , children = []
+                }
+            )
+
+    -- Arrows (contravariant in domain, covariant in codomain)
+    (TArr s1 s2, TArr t1 t2) -> do
+      (r1, d1) <- nominalSubDeriv t1 s1
+      (r2, d2) <- nominalSubDeriv s2 t2
+      let ok = r1 && r2
+      return
+        ( ok
+        , Derivation
+            { ruleId = "S-arrow"
+            , expression = show (TArr s1 s2) ++ " <: " ++ show (TArr t1 t2)
+            , children = [d1, d2]
+            }
+        )
+
+    -- Intersection on the left: s1 & s2 <: t iff s1 <: t and s2 <: t
+    (TIntersection s1 s2, t) -> do
+      (r1, d1) <- nominalSubDeriv s1 t
+      (r2, d2) <- nominalSubDeriv s2 t
+      let ok = r1 && r2
+      return
+        ( ok
+        , Derivation
+            { ruleId = "S-inter-left"
+            , expression = show (TIntersection s1 s2) ++ " <: " ++ show t
+            , children = [d1, d2]
+            }
+        )
+
+    -- Intersection on the right: s <: t1 & t2 iff s <: t1 or s <: t2
+    (s, TIntersection t1 t2) -> do
+      (r1, d1) <- nominalSubDeriv s t1
+      (r2, d2) <- nominalSubDeriv s t2
+      let ok = r1 || r2
+      return
+        ( ok
+        , Derivation
+            { ruleId = "S-inter-right"
+            , expression = show s ++ " <: " ++ show (TIntersection t1 t2)
+            , children = [d1, d2]
+            }
+        )
+
+    -- Recursive types: unfold with a shared fresh variable
+    (TRecursive sBnd, TRecursive tBnd) -> do
+      ((sVar), sBody) <- unbind sBnd
+      ((tVar), tBody) <- unbind tBnd
+      a <- freshTVar
+      let sUnf = subst sVar (TVar a) sBody
+          tUnf = subst tVar (TVar a) tBody
+      (ok, d) <- nominalSubDeriv sUnf tUnf
+      return
+        ( ok
+        , Derivation
+            { ruleId = "S-mu"
+            , expression = show (TRecursive sBnd) ++ " <: " ++ show (TRecursive tBnd)
+            , children = [d]
+            }
+        )
+
+    -- Labeled recursive types: labels must match, then unfold together
+    (TLabeled sLabel sBnd, TLabeled tLabel tBnd) ->
+      if sLabel == tLabel
+        then do
+          (sVar, sBody) <- unbind sBnd
+          (tVar, tBody) <- unbind tBnd
+          a <- freshTVar
+          let sUnf = subst sVar (TVar a) sBody
+              tUnf = subst tVar (TVar a) tBody
+          (ok, d) <- nominalSubDeriv sUnf tUnf
+          return
+            ( ok
+            , Derivation
+                { ruleId = "S-labeled"
+                , expression = show (TLabeled sLabel sBnd) ++ " <: " ++ show (TLabeled tLabel tBnd)
+                , children = [d]
+                }
+            )
+        else
+          return
+            ( False
+            , Derivation
+                { ruleId = "S-fail"
+                , expression = "label mismatch: " ++ show (TLabeled sLabel sBnd) ++ " </: " ++ show (TLabeled tLabel tBnd)
+                , children = []
+                }
+            )
+
+    -- Translated mu with a type and a label variable; unfold both with shared fresh vars
+    (TTranslatedMu sBnd, TTranslatedMu tBnd) -> do
+      ((sTypeVar, sLabelVar), sBody) <- unbind sBnd
+      ((tTypeVar, tLabelVar), tBody) <- unbind tBnd
+      a <- freshTVar
+      b <- freshTVar
+      let sUnf = subst sTypeVar (TVar a) (subst sLabelVar (TVar b) sBody)
+          tUnf = subst tTypeVar (TVar a) (subst tLabelVar (TVar b) tBody)
+      (ok, d) <- nominalSubDeriv sUnf tUnf
+      return
+        ( ok
+        , Derivation
+            { ruleId = "S-transmu"
+            , expression = show (TTranslatedMu sBnd) ++ " <: " ++ show (TTranslatedMu tBnd)
+            , children = [d]
+            }
+        )
+
+    -- Failure
+    _ ->
+      return
+        ( False
+        , Derivation
+            { ruleId = "S-fail"
+            , expression = show source ++ " </: " ++ show target
+            , children = []
+            }
+        )
+
+-- Legacy boolean-only checker retained for logging compatibility
+-- but now implemented via the derivation-producing function.
 buildDerivation :: Typ -> Typ -> Bool -> InferMonad [Derivation]
-buildDerivation source target result = do
-  lift $ tell ["\\text{Building derivation for } " ++ show source ++ " <: " ++ show target ++ " = " ++ show result]
-  
-  -- This would build a more detailed derivation tree
-  -- For now, return a simple derivation
-  return [Derivation
-    { ruleId = "NominalSubtyping"
-    , expression = show source ++ " <: " ++ show target ++ " = " ++ show result
-    , children = []
-    }]
+buildDerivation source target _ = do
+  (_, d) <- nominalSubDeriv source target
+  return [d]
 
 -- Clean interface function (string inputs)
 runNominalSubtypingAlg :: String -> String -> String
