@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Subtyping.Recursive.Nominal (runRecursiveSubtyping, runRecursiveSubtypingAlg, SubtypingResult(..)) where
+module Subtyping.Recursive.Nominal (runNominalSubtyping, runNominalSubtypingAlg, SubtypingResult(..)) where
 
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, toJson)
@@ -21,12 +21,12 @@ data SubtypingResult = SubtypingResult
   }
 
 -- Main entry point for recursive subtyping (unified interface: returns InferResult)
-runRecursiveSubtyping :: Typ -> Typ -> InferResult
-runRecursiveSubtyping source target =
+runNominalSubtyping :: Typ -> Typ -> InferResult
+runNominalSubtyping source target =
   case runInferMonad $ do
     lift $ tell ["\\text{Recursive Subtyping: } " ++ show source ++ " <: " ++ show target]
     -- Run the subtyping algorithm
-    result <- recursiveSubtyping source target
+    result <- nominalSubtyping source target
     -- Build derivation tree
     deriv <- buildDerivation source target result
     return $ SubtypingResult
@@ -48,8 +48,8 @@ runRecursiveSubtyping source target =
             False
 
 -- Core recursive subtyping algorithm
-recursiveSubtyping :: Typ -> Typ -> InferMonad Bool
-recursiveSubtyping source target = do
+nominalSubtyping :: Typ -> Typ -> InferMonad Bool
+nominalSubtyping source target = do
   lift $ tell ["\\text{Checking: } " ++ show source ++ " <: " ++ show target]
   
   case (source, target) of
@@ -70,21 +70,21 @@ recursiveSubtyping source target = do
     -- Function types
     (TArr s1 s2, TArr t1 t2) -> do
       lift $ tell ["\\text{Arrow rule: } " ++ show source ++ " <: " ++ show target]
-      r1 <- recursiveSubtyping t1 s1  -- Contravariant in domain
-      r2 <- recursiveSubtyping s2 t2  -- Covariant in codomain
+      r1 <- nominalSubtyping t1 s1  -- Contravariant in domain
+      r2 <- nominalSubtyping s2 t2  -- Covariant in codomain
       return (r1 && r2)
       
     -- Intersection types
     (TIntersection s1 s2, target) -> do
       lift $ tell ["\\text{Intersection left: } " ++ show source ++ " <: " ++ show target]
-      r1 <- recursiveSubtyping s1 target
-      r2 <- recursiveSubtyping s2 target
+      r1 <- nominalSubtyping s1 target
+      r2 <- nominalSubtyping s2 target
       return (r1 && r2)
       
     (source, TIntersection t1 t2) -> do
       lift $ tell ["\\text{Intersection right: } " ++ show source ++ " <: " ++ show target]
-      r1 <- recursiveSubtyping source t1
-      r2 <- recursiveSubtyping source t2
+      r1 <- nominalSubtyping source t1
+      r2 <- nominalSubtyping source t2
       return (r1 || r2)
       
     -- Recursive types
@@ -98,7 +98,7 @@ recursiveSubtyping source target = do
       let sUnfolded = subst sVar (TVar freshVar) sBody
           tUnfolded = subst tVar (TVar freshVar) tBody
       
-      recursiveSubtyping sUnfolded tUnfolded
+      nominalSubtyping sUnfolded tUnfolded
       
     -- Labeled types
     (TLabeled sLabel sBnd, TLabeled tLabel tBnd) -> do
@@ -114,7 +114,7 @@ recursiveSubtyping source target = do
           let sUnfolded = subst sVar (TVar freshVar) sBody
               tUnfolded = subst tVar (TVar freshVar) tBody
           
-          recursiveSubtyping sUnfolded tUnfolded
+          nominalSubtyping sUnfolded tUnfolded
         else do
           lift $ tell ["\\text{Label mismatch: } " ++ show sLabel ++ " != " ++ show tLabel]
           return False
@@ -131,7 +131,7 @@ recursiveSubtyping source target = do
       let sUnfolded = subst sTypeVar (TVar freshTypeVar) (subst sLabelVar (TVar freshLabelVar) sBody)
           tUnfolded = subst tTypeVar (TVar freshTypeVar) (subst tLabelVar (TVar freshLabelVar) tBody)
       
-      recursiveSubtyping sUnfolded tUnfolded
+      nominalSubtyping sUnfolded tUnfolded
       
     -- Default case - no subtyping relationship
     _ -> do
@@ -146,15 +146,15 @@ buildDerivation source target result = do
   -- This would build a more detailed derivation tree
   -- For now, return a simple derivation
   return [Derivation
-    { ruleId = "RecursiveSubtyping"
+    { ruleId = "NominalSubtyping"
     , expression = show source ++ " <: " ++ show target ++ " = " ++ show result
     , children = []
     }]
 
 -- Clean interface function (string inputs)
-runRecursiveSubtypingAlg :: String -> String -> String
-runRecursiveSubtypingAlg sourceTypeStr targetTypeStr = 
+runNominalSubtypingAlg :: String -> String -> String
+runNominalSubtypingAlg sourceTypeStr targetTypeStr = 
   case (parseTyp sourceTypeStr, parseTyp targetTypeStr) of
     (Left err, _) -> toJson $ InferResult False Nothing [] (Just $ "Source type parse error: " ++ err) False
     (_, Left err) -> toJson $ InferResult False Nothing [] (Just $ "Target type parse error: " ++ err) False
-    (Right source, Right target) -> toJson $ runRecursiveSubtyping source target
+    (Right source, Right target) -> toJson $ runNominalSubtyping source target
