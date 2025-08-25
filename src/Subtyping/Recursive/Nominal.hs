@@ -14,8 +14,8 @@ import Parser (parseTyp)
 -- Data structure for subtyping results
 data SubtypingResult = SubtypingResult
   { isSubtype :: Bool
-  , sourceType :: Typ
-  , targetType :: Typ
+  , leftType :: Typ
+  , rightType :: Typ
   , subtypingDerivation :: [Derivation]
   , subtypingErrorMsg :: Maybe String
   }
@@ -29,8 +29,8 @@ runNominalSubtyping source target =
     (result, drv) <- nominalSubDeriv source target
     return $ SubtypingResult
       { isSubtype = result
-      , sourceType = source
-      , targetType = target
+      , leftType = source
+      , rightType = target
       , subtypingDerivation = [drv]
       , subtypingErrorMsg = Nothing
       }
@@ -40,7 +40,7 @@ runNominalSubtyping source target =
       let infoSteps = map (\msg -> Derivation "Info" msg []) msgs
        in InferResult
             (isSubtype res)
-            (Just $ show (sourceType res) ++ " <: " ++ show (targetType res))
+            (Just $ show (leftType res) ++ " <: " ++ show (rightType res))
             (infoSteps ++ subtypingDerivation res)
             (subtypingErrorMsg res)
             False
@@ -190,15 +190,16 @@ nominalSubDeriv source target = do
         , Derivation
             { ruleId = "S-inter-left"
             , expression = show (TIntersection s1 s2) ++ " <: " ++ show t
-            , children = [d1, d2]
+            , children = if r1 then [d1] else if r2 then [d2] else [d1, d2]
             }
         )
+      
 
     -- Intersection on the right: s <: t1 & t2 iff s <: t1 or s <: t2
     (s, TIntersection t1 t2) -> do
       (r1, d1) <- nominalSubDeriv s t1
       (r2, d2) <- nominalSubDeriv s t2
-      let ok = r1 || r2
+      let ok = r1 && r2
       return
         ( ok
         , Derivation
@@ -318,8 +319,8 @@ buildDerivation source target _ = do
 
 -- Clean interface function (string inputs)
 runNominalSubtypingAlg :: String -> String -> String
-runNominalSubtypingAlg sourceTypeStr targetTypeStr = 
-  case (parseTyp sourceTypeStr, parseTyp targetTypeStr) of
+runNominalSubtypingAlg leftTypeStr rightTypeStr = 
+  case (parseTyp leftTypeStr, parseTyp rightTypeStr) of
     (Left err, _) -> toJson $ InferResult False Nothing [] (Just $ "Source type parse error: " ++ err) False
     (_, Left err) -> toJson $ InferResult False Nothing [] (Just $ "Target type parse error: " ++ err) False
     (Right source, Right target) -> toJson $ runNominalSubtyping source target

@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Lib (InferMonad, runInferMonad, freshTVar, break3, Derivation (..), InferResult (..), toJson) where
+module Lib (InferMonad, runInferMonad, freshTVar, freshLVar, break3, Derivation (..), InferResult (..), toJson) where
 
 import Control.Monad.RWS (MonadTrans (lift), RWST, get, put, runRWST)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
@@ -8,7 +8,7 @@ import Data.Aeson (ToJSON(..), encode, object, (.=))
 import qualified Data.Aeson.Key as Key
 import qualified Data.ByteString.Lazy.Char8 as L8
 import GHC.Generics ()
-import Syntax (TyVar)
+import Syntax (TyVar, LabelVar)
 import Unbound.Generics.LocallyNameless (FreshMT, runFreshMT)
 import Unbound.Generics.LocallyNameless.Fresh (Fresh (..))
 import Unbound.Generics.LocallyNameless.Name (s2n)
@@ -30,6 +30,16 @@ freshTVar = do
   varId <- get
   put (varId + 1)
   fresh . s2n $ letters !! (varId `mod` length letters)
+
+
+freshLVar :: InferMonad LabelVar
+freshLVar = do
+  let letters = ["l", "m", "n", "o"]
+  varId <- get
+  put (varId + 1)
+  fresh . s2n $ letters !! (varId `mod` length letters)
+
+
 
 break3 :: (a -> Bool) -> [a] -> ([a], Maybe a, [a])
 break3 p xs = case break p xs of

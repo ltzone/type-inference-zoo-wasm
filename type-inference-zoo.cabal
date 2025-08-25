@@ -46,6 +46,7 @@ library
       Parser
       Subtyping.Recursive
       Subtyping.Recursive.Nominal
+      Subtyping.Recursive.Translate
       Syntax
   other-modules:
       Paths_type_inference_zoo
