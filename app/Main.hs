@@ -27,6 +27,7 @@ runAlg algName tm = case algName of
 runSubtyping :: String -> Typ -> Typ -> String
 runSubtyping mode lty rty = case mode of
   "nominal" -> toJson $ runNominalSubtyping lty rty
+  "translate" -> toJson $ runDistributiveSubtyping lty rty
   _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid subtyping mode: " ++ mode) False
 
 runTranslation :: String -> Typ -> String

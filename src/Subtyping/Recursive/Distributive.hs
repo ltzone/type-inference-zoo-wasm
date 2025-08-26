@@ -13,9 +13,10 @@ import Unbound.Generics.LocallyNameless.Unsafe (unsafeUnbind)
 import Unbound.Generics.LocallyNameless.Name (AnyName (..))
 import Unbound.Generics.LocallyNameless.Operations (bind)
 import Control.Monad.Except (throwError)
-import Data.Map.Strict (singleton)
+import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Unbound.Generics.PermM (single)
-
+import Subtyping.Recursive.Lib (SubtypingResult(..))
+import Subtyping.Recursive.Translate (translation)
 
 
 -- controlled splitting
@@ -197,7 +198,7 @@ bcdSubDeriv leftTyp rightTyp = do
           expression = show leftTyp ++ " <: " ++ show rty,
           children = [ Derivation {
             ruleId = "Top-like",
-            expression = "\\lceil" ++ show rty ++ " \\ rceil",
+            expression = "\\lceil" ++ show rty ++ " \\rceil",
             children = []
           } ]
         })
@@ -310,5 +311,28 @@ bcdSubDeriv leftTyp rightTyp = do
       })
 
 
-        
-
+runDistributiveSubtyping :: Typ -> Typ -> InferResult
+runDistributiveSubtyping s t =case runInferMonad $ do
+  lift $ tell ["\\textbf{Distributive Subtyping: }" ++ show s ++ " <: " ++ show t]
+  (srcTrans, d1) <- translation s
+  lift $ tell ["\\textbf{Source type translated to: }" ++ show srcTrans]
+  (tgtTrans, d2) <- translation t
+  lift $ tell ["\\textbf{Target type translated to: }" ++ show tgtTrans]
+  (ok, d3) <- bcdSubDeriv srcTrans tgtTrans
+  return $ SubtypingResult
+    { isSubtype = ok
+    , leftType = srcTrans
+    , rightType = tgtTrans
+    , subtypingDerivation = [ d3, d1, d2]
+    , subtypingErrorMsg = Nothing
+    }
+  of 
+    Left errs -> InferResult False Nothing [] (Just $ unlines errs) False
+    Right (res, msgs) -> 
+      let infoSteps = map (\msg -> Derivation "Info" msg []) msgs
+       in InferResult
+            (isSubtype res)
+            (Just $ show (leftType res) ++ " <: " ++ show (rightType res))
+            (infoSteps ++ subtypingDerivation res)
+            (subtypingErrorMsg res)
+            False

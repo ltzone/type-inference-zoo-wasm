@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Subtyping.Recursive.Translate (runTranslationS, TranslationResult(..)) where
+module Subtyping.Recursive.Translate (translation, runTranslationS, TranslationResult(..)) where
 
 
 import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, freshLVar, runInferMonad)
