@@ -34,7 +34,7 @@ freshTVar = do
 
 freshLVar :: InferMonad LabelVar
 freshLVar = do
-  let letters = ["l", "m", "n", "o"]
+  let letters = ["l"]
   varId <- get
   put (varId + 1)
   fresh . s2n $ letters !! (varId `mod` length letters)

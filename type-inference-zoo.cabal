@@ -46,6 +46,7 @@ library
       Parser
       Subtyping.Recursive
       Subtyping.Recursive.Distributive
+      Subtyping.Recursive.Lib
       Subtyping.Recursive.Nominal
       Subtyping.Recursive.Translate
       Syntax

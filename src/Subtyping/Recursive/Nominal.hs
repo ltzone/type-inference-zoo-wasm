@@ -10,15 +10,7 @@ import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMo
 import Syntax (Typ (..))
 import Unbound.Generics.LocallyNameless (subst, unbind)
 import Parser (parseTyp)
-
--- Data structure for subtyping results
-data SubtypingResult = SubtypingResult
-  { isSubtype :: Bool
-  , leftType :: Typ
-  , rightType :: Typ
-  , subtypingDerivation :: [Derivation]
-  , subtypingErrorMsg :: Maybe String
-  }
+import Subtyping.Recursive.Lib (SubtypingResult (..))
 
 -- Main entry point for recursive subtyping (unified interface: returns InferResult)
 runNominalSubtyping :: Typ -> Typ -> InferResult

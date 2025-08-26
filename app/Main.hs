@@ -29,6 +29,13 @@ runSubtyping mode lty rty = case mode of
   "nominal" -> toJson $ runNominalSubtyping lty rty
   _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid subtyping mode: " ++ mode) False
 
+runTranslation :: String -> Typ -> String
+runTranslation mode ty = case mode of
+  "standard" -> toJson $ runTranslationS ty
+  _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid translation mode: " ++ mode) False
+
+
+
 main :: IO ()
 main = do
   args <- getArgs
@@ -38,6 +45,10 @@ main = do
           case parseTrm code of
             Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
             Right tm -> putStrLn $ runAlg algName tm
+      | Just (Translate mode) <- find (\case Translate _ -> True; _ -> False) flags -> do
+          case parseTyp code of
+            Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
+            Right ty -> putStrLn $ runTranslation mode ty
     (flags, [source, target], [])
       | Just (Subtyping mode) <- find (\case Subtyping _ -> True; _ -> False) flags -> do
           case (parseTyp source, parseTyp target) of

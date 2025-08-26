@@ -3,16 +3,13 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Subtyping.Recursive.Translate (translation, TranslationResult(..)) where
+module Subtyping.Recursive.Translate (runTranslationS, TranslationResult(..)) where
 
 
-import Control.Monad.Except (MonadError (throwError))
-import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, freshLVar, runInferMonad, toJson)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, freshLVar, runInferMonad)
 import Syntax (Typ (..), TyVar)
 import Unbound.Generics.LocallyNameless (subst, unbind, bind)
-import Parser (parseTyp)
-import GHC.Conc (TVar)
+import Control.Monad.Except (throwError)
 
 -- Data structure for translation results
 data TranslationResult = TranslationResult
@@ -23,8 +20,51 @@ data TranslationResult = TranslationResult
   }
 
 
--- substp :: Bool -> TyVar -> Typ -> Typ -> Typ
--- substp _ _ _ t = t
+substp :: Bool -> TyVar -> Typ -> Typ -> InferMonad Typ
+substp contra var replacement typ = case typ of
+  TInt -> return TInt
+  TBool -> return TBool
+  TTop -> return TTop
+  TBot -> return TBot
+  TVar v | contra && (v == var) -> return replacement
+         | otherwise -> return $ TVar v
+  ETVar _ ->
+    throwError "existential variables not supported in polarized substitution"
+  STVar _ ->
+    throwError "existential variables not supported in polarized substitution"
+  TArr t1 t2 -> do
+    t1' <- substp (not contra) var replacement t1
+    t2' <- substp contra var replacement t2
+    return $ TArr t1' t2'
+  TIntersection t1 t2 -> do
+    t1' <- substp contra var replacement t1
+    t2' <- substp contra var replacement t2
+    return $ TIntersection t1' t2'
+  TUnion t1 t2 -> do
+    t1' <- substp contra var replacement t1
+    t2' <- substp contra var replacement t2
+    return $ TUnion t1' t2'
+  TAllB _ _ -> 
+    throwError "bounded universal types not supported in polarized substitution"
+  TTuple ts -> do
+    ts' <- mapM (substp contra var replacement) ts
+    return $ TTuple ts'
+  TRecursive _ -> 
+    throwError "Polarized substitution should not occur on recursive types directly"
+  TLabel l t -> do
+    t' <- substp contra var replacement t
+    return $ TLabel l t'
+  TLabeled l bnd -> do
+    (v, t) <- unbind bnd
+    t' <- substp contra var replacement t
+    return $ TLabeled l (bind v t')
+  TTranslatedMu bnd -> do
+    ((v, l), t) <- unbind bnd
+    t' <- substp contra var replacement t
+    return $ TTranslatedMu (bind (v, l) t')
+  
+  
+  
 
 
 translation :: Typ -> InferMonad (Typ, Derivation)
@@ -51,21 +91,21 @@ translation ty = do
           , Derivation {
               ruleId = "Trans-Int",
               children = [],
-              expression = "\\text{int} \\rightsquigarrow \\text{int}"
+              expression = "\\texttt{Int} \\rightsquigarrow \\texttt{Int}"
           })
     TBool -> return
           ( TBool
           , Derivation {
               ruleId = "Trans-Bool",
               children = [],
-              expression = "\\text{bool} \\rightsquigarrow \\text{bool}"
+              expression = "\\texttt{Bool} \\rightsquigarrow \\texttt{Bool}"
           })
     TVar name -> return
           ( TVar name
           , Derivation {
               ruleId = "Trans-Var",
               children = [],
-              expression = show name ++ " \\rightsquigarrow " ++ show name
+              expression = show (TVar name) ++ " \\rightsquigarrow " ++ show (TVar name)
           })
     TArr ty1 ty2 -> do
         (ty1', d1) <- translation ty1
@@ -97,7 +137,7 @@ translation ty = do
         let bodyTransClos = bind a bodyTrans
         (rvar, rbody) <- unbind bodyTransClos
         l <- freshLVar
-        let rbody' = subst rvar (TLabeled l bodyTransClos) rbody
+        rbody' <- substp False rvar (TLabeled l bodyTransClos) rbody
         let ty' = TTranslatedMu (bind (rvar, l) rbody')
         return
           ( ty'
@@ -108,3 +148,11 @@ translation ty = do
           })
 
     _ -> throwError $ "Translation not defined for type: " ++ show ty
+
+
+-- Clean interface for running translation
+runTranslationS :: Typ -> InferResult
+runTranslationS tm = case runInferMonad (translation tm) of
+  Left [] -> InferResult False Nothing [] (Just "Unknown error during translation") True
+  Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err) True
+  Right ((ty', drv), _) -> InferResult True (Just $ show ty') [drv] Nothing False

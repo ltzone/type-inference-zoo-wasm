@@ -157,9 +157,9 @@ showsPrecTyp p (TRecursive bnd) = do
   t' <- showsPrecTyp 0 t
   return $ showParen (p > 0) $ showString "\\mu " . showString (latexifyVar x) . showString ".~" . t'
 showsPrecTyp p (TLabeled l bnd) = do
-  (_, a) <- unbind bnd
+  (x, a) <- unbind bnd
   a' <- showsPrecTyp 0 a
-  return $ showParen (p > 0) $ showString "\\{" . showString (latexifyVar l) . showString " : " . a' . showString "\\}"
+  return $ showParen (p > 0) $ showString "\\{" . showString (latexifyVar l) . showString " : " . showString (latexifyVar x) .  showString " . "  . a' . showString "\\}"
 showsPrecTyp p (TTranslatedMu bnd) = do
   ((a, l), body) <- unbind bnd
   body' <- showsPrecTyp 0 body
