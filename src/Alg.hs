@@ -1,10 +1,12 @@
 module Alg
-  ( module Alg.HM,
-    module Alg.DK,
-    module Alg.Local,
+  ( module Typing.DK,
+    module Typing.HM,
+    module Typing.Local,
+    module Subtyping.Recursive,
   )
 where
 
-import Alg.DK
-import Alg.HM
-import Alg.Local
+import Subtyping.Recursive
+import Typing.DK
+import Typing.HM
+import Typing.Local

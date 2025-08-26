@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Alg.DK.Worklist.Common where
+module Typing.DK.Worklist.Common where
 
 import Control.Monad.Error.Class (MonadError (throwError))
 import Data.Data (Typeable)

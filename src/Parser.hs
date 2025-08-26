@@ -1,6 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
-module Parser (parseTrm) where
+module Parser (parseTrm, parseTyp) where
 
 import Control.Monad (void)
 import Control.Monad.Combinators.Expr
@@ -149,6 +149,9 @@ aTyp :: Parser Typ
 aTyp =
   choice
     [ tAllB,
+      tRecursive,
+      tLabeled,
+      tTranslatedMu,
       TVar . s2n <$> identifier,
       tConst,
       parens typ
@@ -161,6 +164,36 @@ tAllB = do
   symbol "."
   ty <- typ
   return $ TAllB (bind (s2n x) ty) b
+
+tRecursive :: Parser Typ
+tRecursive = do
+  rword "mu"
+  x <- identifier
+  symbol "."
+  ty <- typ
+  return $ TRecursive (bind (s2n x) ty)
+
+tLabeled :: Parser Typ
+tLabeled = do
+  symbol "{"
+  l <- identifier
+  symbol ":"
+  ty <- typ
+  symbol "}"
+  return $ TLabeled (s2n l) (bind (s2n l) ty)
+
+tTranslatedMu :: Parser Typ
+tTranslatedMu = do
+  symbol "["
+  symbol "("
+  a <- identifier
+  symbol ","
+  l <- identifier
+  symbol ")"
+  symbol "."
+  ty <- typ
+  symbol "]"
+  return $ TTranslatedMu (bind (s2n a, s2n l) ty)
 
 tConst :: Parser Typ
 tConst =
@@ -209,7 +242,7 @@ postfixChain p op = do
         <|> return x
 
 rws :: [String]
-rws = ["Int", "Bool", "let", "letrec", "in", "fix", "True", "False", "if", "then", "else", "forall", "Top", "Bot"]
+rws = ["Int", "Bool", "let", "letrec", "in", "fix", "True", "False", "if", "then", "else", "forall", "Top", "Bot", "mu"]
 
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)
@@ -236,3 +269,9 @@ idBound = try explicit <|> implicit
       t <- aTyp
       symbol ")"
       return (x, t)
+
+parseTyp :: String -> Either String Typ
+parseTyp s =
+  case runParser (whole typ) "" s of
+    Left err -> Left $ "Parse error: " ++ errorBundlePretty err
+    Right e -> Right e

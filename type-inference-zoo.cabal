@@ -25,26 +25,30 @@ source-repository head
 library
   exposed-modules:
       Alg
-      Alg.DK
-      Alg.DK.Common
-      Alg.DK.DK
-      Alg.DK.Worklist
-      Alg.DK.Worklist.Bounded
-      Alg.DK.Worklist.Common
-      Alg.DK.Worklist.DK
-      Alg.DK.Worklist.Elementary
-      Alg.DK.Worklist.IU
-      Alg.HM
-      Alg.HM.AlgR
-      Alg.HM.AlgW
-      Alg.Local
-      Alg.Local.Contextual
-      Alg.Local.Contextual.Contextual
-      Alg.Local.Local
       Lib
       Opt
       Parser
+      Subtyping.Recursive
+      Subtyping.Recursive.Distributive
+      Subtyping.Recursive.Nominal
+      Subtyping.Recursive.Translate
       Syntax
+      Typing.DK
+      Typing.DK.Common
+      Typing.DK.DK
+      Typing.DK.Worklist
+      Typing.DK.Worklist.Bounded
+      Typing.DK.Worklist.Common
+      Typing.DK.Worklist.DK
+      Typing.DK.Worklist.Elementary
+      Typing.DK.Worklist.IU
+      Typing.HM
+      Typing.HM.AlgR
+      Typing.HM.AlgW
+      Typing.Local
+      Typing.Local.Contextual
+      Typing.Local.Contextual.Contextual
+      Typing.Local.Local
   other-modules:
       Paths_type_inference_zoo
   hs-source-dirs:
