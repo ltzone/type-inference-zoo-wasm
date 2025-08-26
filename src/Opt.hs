@@ -8,5 +8,5 @@ data Option = Alg String | Subtyping String | Html
 options :: [OptDescr Option]
 options =
   [Option [] ["alg"] (ReqArg Alg "ALG_NAME") "ALG_NAME"
-  ,Option [] ["subtyping"] (ReqArg Subtyping "MODE") "MODE (e.g., 'recursive')"
+  ,Option [] ["subtyping"] (ReqArg Subtyping "MODE") "MODE (e.g., 'nominal')"
   ]

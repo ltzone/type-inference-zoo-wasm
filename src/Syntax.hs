@@ -151,7 +151,7 @@ showsPrecTyp _ (TTuple ts) = do
 -- Pretty printing for recursive types
 showsPrecTyp p (TLabel l a) = do
   a' <- showsPrecTyp 0 a
-  return $ showParen (p > 0) $ showString "\\{ : " . showString (latexifyVar l) . a' . showString "\\}"
+  return $ showParen (p > 0) $ showString "\\{ " . showString (latexifyVar l) . showString ":" . a' . showString "\\}"
 showsPrecTyp p (TRecursive bnd) = do
   (x, t) <- unbind bnd
   t' <- showsPrecTyp 0 t

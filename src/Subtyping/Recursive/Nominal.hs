@@ -45,101 +45,10 @@ runNominalSubtyping source target =
             (subtypingErrorMsg res)
             False
 
--- Core recursive subtyping algorithm
-nominalSubtyping :: Typ -> Typ -> InferMonad Bool
-nominalSubtyping source target = do
-  -- lift $ tell ["\\text{Checking: } " ++ show source ++ " <: " ++ show target]
-  
-  case (source, target) of
-    -- Base cases
-    (_, TTop) -> do
-      lift $ tell ["\\text{Top rule: } " ++ show source ++ " <: \\top"]
-      return True
-      
-    (TInt, TInt) -> do
-      lift $ tell ["\\text{Int rule: } \\texttt{Int} <: \\texttt{Int}"]
-      return True
-      
-    (TVar v1, TVar v2) -> do
-      let result = v1 == v2
-      lift $ tell ["\\text{Var rule: } " ++ show v1 ++ " <: " ++ show v2 ++ " = " ++ show result]
-      return result
-      
-    -- Function types
-    (TArr s1 s2, TArr t1 t2) -> do
-      lift $ tell ["\\text{Arrow rule: } " ++ show source ++ " <: " ++ show target]
-      r1 <- nominalSubtyping t1 s1  -- Contravariant in domain
-      r2 <- nominalSubtyping s2 t2  -- Covariant in codomain
-      return (r1 && r2)
-      
-    -- Intersection types
-    (TIntersection s1 s2, target) -> do
-      lift $ tell ["\\text{Intersection left: } " ++ show source ++ " <: " ++ show target]
-      r1 <- nominalSubtyping s1 target
-      r2 <- nominalSubtyping s2 target
-      return (r1 && r2)
-      
-    (source, TIntersection t1 t2) -> do
-      lift $ tell ["\\text{Intersection right: } " ++ show source ++ " <: " ++ show target]
-      r1 <- nominalSubtyping source t1
-      r2 <- nominalSubtyping source t2
-      return (r1 || r2)
-      
-    -- Recursive types
-    (TRecursive sBnd, TRecursive tBnd) -> do
-      lift $ tell ["\\text{Recursive rule: } " ++ show source ++ " <: " ++ show target]
-      (sVar, sBody) <- unbind sBnd
-      (tVar, tBody) <- unbind tBnd
-      
-      -- Create fresh variables for unfolding
-      freshVar <- freshTVar
-      let sUnfolded = subst sVar (TVar freshVar) sBody
-          tUnfolded = subst tVar (TVar freshVar) tBody
-      
-      nominalSubtyping sUnfolded tUnfolded
-      
-    -- Labeled types
-    (TLabeled sLabel sBnd, TLabeled tLabel tBnd) -> do
-      lift $ tell ["\\text{Labeled rule: } " ++ show source ++ " <: " ++ show target]
-      -- Check if labels are compatible
-      if sLabel == tLabel
-        then do
-          (sVar, sBody) <- unbind sBnd
-          (tVar, tBody) <- unbind tBnd
-          
-          -- Create fresh variables for unfolding
-          freshVar <- freshTVar
-          let sUnfolded = subst sVar (TVar freshVar) sBody
-              tUnfolded = subst tVar (TVar freshVar) tBody
-          
-          nominalSubtyping sUnfolded tUnfolded
-        else do
-          lift $ tell ["\\text{Label mismatch: } " ++ show sLabel ++ " != " ++ show tLabel]
-          return False
-          
-    -- Translated recursive types
-    (TTranslatedMu sBnd, TTranslatedMu tBnd) -> do
-      lift $ tell ["\\text{TranslatedMu rule: } " ++ show source ++ " <: " ++ show target]
-      ((sTypeVar, sLabelVar), sBody) <- unbind sBnd
-      ((tTypeVar, tLabelVar), tBody) <- unbind tBnd
-      
-      -- Create fresh variables for unfolding
-      freshTypeVar <- freshTVar
-      freshLabelVar <- freshTVar
-      let sUnfolded = subst sTypeVar (TVar freshTypeVar) (subst sLabelVar (TVar freshLabelVar) sBody)
-          tUnfolded = subst tTypeVar (TVar freshTypeVar) (subst tLabelVar (TVar freshLabelVar) tBody)
-      
-      nominalSubtyping sUnfolded tUnfolded
-      
-    -- Default case - no subtyping relationship
-    _ -> do
-      lift $ tell ["\\text{No rule applies: } " ++ show source ++ " <: " ++ show target ++ " = \\text{false}"]
-      return False
-
 -- Build derivation tree and decision simultaneously
 nominalSubDeriv :: Typ -> Typ -> InferMonad (Bool, Derivation)
 nominalSubDeriv source target = do
-  lift $ tell ["\\text{Derive: } " ++ show source ++ " <: " ++ show target]
+  -- lift $ tell ["\\text{Derive: } " ++ show source ++ " <: " ++ show target]
   case (source, target) of
     -- Top
     (_, TTop) ->
@@ -150,9 +59,9 @@ nominalSubDeriv source target = do
 
     -- Refl on base types
     (TInt, TInt) ->
-      return (True, Derivation { ruleId = "S-int", expression = "Int <: Int", children = [] })
+      return (True, Derivation { ruleId = "S-int", expression = "\\texttt{Int} <: \\texttt{Int}", children = [] })
     (TBool, TBool) ->
-      return (True, Derivation { ruleId = "S-bool", expression = "Bool <: Bool", children = [] })
+      return (True, Derivation { ruleId = "S-bool", expression = "\\texttt{Bool} <: \\texttt{Bool}", children = [] })
 
     -- Type variables
     (TVar v1, TVar v2) ->
@@ -245,7 +154,7 @@ nominalSubDeriv source target = do
             ( False
             , Derivation
                 { ruleId = "S-fail"
-                , expression = "label mismatch: " ++ show (TLabel slabel sty) ++ " </: " ++ show (TLabel rlabel rty)
+                , expression = "label mismatch: " ++ show slabel ++ " \\textcolor{red}{\\nleq } " ++ show rlabel
                 , children = []
                 }
             )
@@ -276,7 +185,7 @@ nominalSubDeriv source target = do
             ( False
             , Derivation
                 { ruleId = "S-fail"
-                , expression = "label mismatch: " ++ show (TLabeled sLabel sBnd) ++ " </: " ++ show (TLabeled tLabel tBnd)
+                , expression = "label mismatch: " ++ show sLabel ++ " \\textcolor{red}{\\nleq } " ++ show tLabel
                 , children = []
                 }
             )
@@ -305,17 +214,10 @@ nominalSubDeriv source target = do
         ( False
         , Derivation
             { ruleId = "S-fail"
-            , expression = show source ++ " </: " ++ show target
+            , expression = show source ++ "\\textcolor{red}{\\nleq}" ++ show target
             , children = []
             }
         )
-
--- Legacy boolean-only checker retained for logging compatibility
--- but now implemented via the derivation-producing function.
-buildDerivation :: Typ -> Typ -> Bool -> InferMonad [Derivation]
-buildDerivation source target _ = do
-  (_, d) <- nominalSubDeriv source target
-  return [d]
 
 -- Clean interface function (string inputs)
 runNominalSubtypingAlg :: String -> String -> String
