@@ -45,6 +45,7 @@ library
       Opt
       Parser
       Subtyping.Recursive
+      Subtyping.Recursive.Distributive
       Subtyping.Recursive.Nominal
       Subtyping.Recursive.Translate
       Syntax

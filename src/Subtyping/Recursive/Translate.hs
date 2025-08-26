@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Subtyping.Recursive.Translate (runTranslation, TranslationResult(..)) where
+module Subtyping.Recursive.Translate (translation, TranslationResult(..)) where
 
 
 import Control.Monad.Except (MonadError (throwError))
@@ -97,11 +97,8 @@ translation ty = do
         let bodyTransClos = bind a bodyTrans
         (rvar, rbody) <- unbind bodyTransClos
         l <- freshLVar
-        
-        
-        
-        -- !!!!! TODO change this to polarized substitution
-        let ty' = TTranslatedMu (subst rvar (TLabeled l bodyTransClos) rbody)
+        let rbody' = subst rvar (TLabeled l bodyTransClos) rbody
+        let ty' = TTranslatedMu (bind (rvar, l) rbody')
         return
           ( ty'
           , Derivation {

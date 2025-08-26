@@ -25,8 +25,8 @@ runAlg algName tm = case algName of
 
 -- Mode switching function for subtyping algorithms (unified interface)
 runSubtyping :: String -> Typ -> Typ -> String
-runSubtyping mode sourceType targetType = case mode of
-  "recursive" -> toJson $ runNominalSubtyping sourceType targetType
+runSubtyping mode lty rty = case mode of
+  "recursive" -> toJson $ runNominalSubtyping lty rty
   _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid subtyping mode: " ++ mode) False
 
 main :: IO ()
@@ -43,6 +43,6 @@ main = do
           case (parseTyp source, parseTyp target) of
             (Left err, _) -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
             (_, Left err) -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
-            (Right sourceType, Right targetType) ->
-              putStrLn $ runSubtyping mode sourceType targetType
+            (Right src, Right tgt) ->
+              putStrLn $ runSubtyping mode src tgt
     (_, _, errs) -> print errs
