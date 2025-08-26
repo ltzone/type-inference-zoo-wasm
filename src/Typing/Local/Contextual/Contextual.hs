@@ -3,7 +3,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Alg.Local.Contextual.Contextual (runContextual) where
+module Typing.Local.Contextual.Contextual (runContextual) where
 
 import Control.Monad.Except (throwError)
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
