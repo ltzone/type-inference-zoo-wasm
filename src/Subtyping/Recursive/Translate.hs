@@ -1,10 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE PatternSynonyms #-}
 
-module Subtyping.Recursive.Translate (translation, runTranslationS, TranslationResult(..)) where
-
+module Subtyping.Recursive.Translate (translation, runTranslationS, TranslationResult (..)) where
 
 import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, freshLVar, runInferMonad)
 import Syntax (Typ (..), TyVar)
@@ -13,10 +9,10 @@ import Control.Monad.Except (throwError)
 
 -- Data structure for translation results
 data TranslationResult = TranslationResult
-  { sourceType :: Typ
-  , targetType :: Typ
-  , translationDerivation :: [Derivation]
-  , translationErrorMsg :: Maybe String
+  { sourceType :: Typ,
+    targetType :: Typ,
+    translationDerivation :: [Derivation],
+    translationErrorMsg :: Maybe String
   }
 
 
@@ -65,7 +61,6 @@ substp contra var replacement typ = case typ of
   
   
   
-
 
 translation :: Typ -> InferMonad (Typ, Derivation)
 translation ty = do

@@ -11,8 +11,8 @@ import Syntax (Trm, Typ)
 import System.Console.GetOpt (ArgOrder (Permute), getOpt)
 import System.Environment (getArgs)
 
-runAlg :: String -> Trm -> String
-runAlg algName tm = case algName of
+runTyping :: String -> Trm -> String
+runTyping algName tm = case algName of
   "W" -> toJson $ runAlgW tm
   "R" -> toJson $ runAlgR tm
   "DK" -> toJson $ runDK tm
@@ -23,7 +23,6 @@ runAlg algName tm = case algName of
   "Contextual" -> toJson $ runContextual tm
   _ -> toJson $ InferResult False Nothing [] (Just $ "Invalid algorithm: " ++ algName) False
 
--- Mode switching function for subtyping algorithms (unified interface)
 runSubtyping :: String -> Typ -> Typ -> String
 runSubtyping mode lty rty = case mode of
   "nominal" -> toJson $ runNominalSubtyping lty rty
@@ -42,10 +41,10 @@ main = do
   args <- getArgs
   case getOpt Permute options args of
     (flags, [code], [])
-      | Just (Alg algName) <- find (\case Alg _ -> True; _ -> False) flags -> do
+      | Just (Typing algName) <- find (\case Typing _ -> True; _ -> False) flags -> do
           case parseTrm code of
             Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False
-            Right tm -> putStrLn $ runAlg algName tm
+            Right tm -> putStrLn $ runTyping algName tm
       | Just (Translate mode) <- find (\case Translate _ -> True; _ -> False) flags -> do
           case parseTyp code of
             Left err -> putStrLn $ toJson $ InferResult False Nothing [] (Just err) False

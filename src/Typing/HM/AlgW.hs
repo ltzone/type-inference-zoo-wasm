@@ -1,6 +1,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 
-module Alg.HM.AlgW (runAlgW) where
+module Typing.HM.AlgW (runAlgW) where
 
 import Control.Monad (foldM)
 import Control.Monad.Except (MonadError (throwError))

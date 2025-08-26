@@ -3,9 +3,9 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Alg.DK.DK (runDK) where
+module Typing.DK.DK (runDK) where
 
-import Alg.DK.Common (isAll)
+import Typing.DK.Common (isAll)
 import Control.Monad.Error.Class (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)

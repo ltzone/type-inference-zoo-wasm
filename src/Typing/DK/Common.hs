@@ -1,6 +1,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 
-module Alg.DK.Common (isAll, isAllB, isLam) where
+module Typing.DK.Common (isAll, isAllB, isLam) where
 
 import Syntax (Trm (..), Typ (..), pattern TAll)
 
