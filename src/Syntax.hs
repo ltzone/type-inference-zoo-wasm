@@ -97,9 +97,13 @@ instance Subst Typ Typ where
   isvar (STVar v) = Just (SubstName v)
   isvar _ = Nothing
 
+
 instance Subst Trm Trm where
   isvar (Var v) = Just (SubstName v)
   isvar _ = Nothing
+
+
+
 
 splitVar :: Name a -> (String, String)
 splitVar = break (`elem` "0123456789") . show
@@ -159,7 +163,7 @@ showsPrecTyp p (TRecursive bnd) = do
 showsPrecTyp p (TLabeled l bnd) = do
   (x, a) <- unbind bnd
   a' <- showsPrecTyp 0 a
-  return $ showParen (p > 0) $ showString "\\{" . showString (latexifyVar l) . showString " : " . showString (latexifyVar x) .  showString " . "  . a' . showString "\\}"
+  return $ showParen (p > 0) $ showString "\\{" . showString (latexifyVar x) .  showString " .~"  . a' . showString "\\}^{\\textcolor{red}{" . showString (latexifyVar l) . showString "}}"
 showsPrecTyp p (TTranslatedMu bnd) = do
   ((a, l), body) <- unbind bnd
   body' <- showsPrecTyp 0 body

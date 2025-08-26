@@ -85,14 +85,24 @@ nominalSubDeriv source target = do
     (TIntersection s1 s2, t) -> do
       (r1, d1) <- nominalSubDeriv s1 t
       (r2, d2) <- nominalSubDeriv s2 t
-      let ok = r1 && r2
-      return
-        ( ok
-        , Derivation
-            { ruleId = "S-inter-left"
-            , expression = show (TIntersection s1 s2) ++ " <: " ++ show t
-            , children = if r1 then [d1] else if r2 then [d2] else [d1, d2]
-            }
+      if r1 then return (
+        True, Derivation {
+          ruleId = "S-andl",
+          expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
+          children = [d1]
+        }
+        ) else if r2 then return (
+        True, Derivation {
+          ruleId = "S-andr",
+          expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
+          children = [d2]
+        }
+        ) else return (
+        False, Derivation {
+          ruleId = "S-and",
+          expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
+          children = [d1, d2]
+        }
         )
       
 
