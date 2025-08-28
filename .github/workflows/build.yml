@@ -57,7 +57,7 @@ jobs:
           mkdir -p dist
           cp ./dist-newstyle/build/wasm32-wasi/ghc-*/type-inference-zoo-0.1.0.0/x/type-inference-zoo-exe/build/type-inference-zoo-exe/type-inference-zoo-exe.wasm dist/bin.wasm
 
-      - name: Upload Artifact for GitHub Pages
+      - name: Upload Artifact to R2 Object Storage
         uses: ryand56/r2-upload-action@latest
         with:
           r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}

@@ -2,14 +2,14 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Typing.HM.AlgR (runAlgR) where
+module Typing.HM.AlgR (runAlgR, algRMeta) where
 
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Bifunctor (bimap)
 import Data.Foldable (find)
 import Data.List (intercalate)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..))
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll, wrapVar)
 import Unbound.Generics.LocallyNameless
 
@@ -236,3 +236,32 @@ runAlgR tm = case runInferMonad $ infer [] tm of
   Left [] -> InferResult False Nothing [] (Just "\\text{Unknown error}") True
   Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err) True
   Right ((_, ty, _, drv), _) -> InferResult True (Just $ show ty) [drv] Nothing False
+
+algRMeta :: AlgMeta
+algRMeta = AlgMeta
+  { metaId = "R"
+  , metaName = "Algorithm R"
+  , metaLabels = ["Global", "Unification", "Hindley-Milner"]
+  , metaViewMode = "tree"
+  , metaMode = "inference"
+  , metaPaper = Paper
+    { paperTitle = "No Unification Variable Left Behind: Fully Grounding Type Inference for the HDM System"
+    , paperAuthors = ["Roger Bosman", "Georgios Karachalias", "Tom Schrijvers"]
+    , paperYear = 2023
+    , paperUrl = "https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITP.2023.8"
+    }
+  , metaVariants = Nothing
+  , metaDefaultVariant = Nothing
+  , metaRules = 
+    [ Rule
+      { metaRuleId = "placeholder"
+      , metaRuleName = "TBA"
+      , metaRulePremises = []
+      , metaRuleConclusion = "\\text{Rules will be added soon.}"
+      , metaRuleDescription = Nothing
+      , metaRuleReduction = Nothing
+      }
+    ]
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
+  }

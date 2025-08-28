@@ -1,13 +1,15 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE DeriveGeneric #-}
 
-module Lib (InferMonad, runInferMonad, freshTVar, freshLVar, break3, Derivation (..), InferResult (..), toJson) where
+module Lib (InferMonad, runInferMonad, freshTVar, freshLVar, break3, Derivation (..), InferResult (..), toJson, Paper(..), Variant(..), Rule(..), RuleGroup(..), AlgMeta(..), getAllMeta) where
 
 import Control.Monad.RWS (MonadTrans (lift), RWST, get, put, runRWST)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
-import Data.Aeson (ToJSON(..), encode, object, (.=))
+import Data.Aeson (ToJSON(..), encode, object, (.=), genericToJSON, defaultOptions, fieldLabelModifier)
 import qualified Data.Aeson.Key as Key
 import qualified Data.ByteString.Lazy.Char8 as L8
-import GHC.Generics ()
+import GHC.Generics (Generic)
+
 import Syntax (TyVar, LabelVar)
 import Unbound.Generics.LocallyNameless (FreshMT, runFreshMT)
 import Unbound.Generics.LocallyNameless.Fresh (Fresh (..))
@@ -78,3 +80,81 @@ instance ToJSON InferResult where
 
 toJson :: InferResult -> String
 toJson = L8.unpack . encode
+
+-- | Paper metadata
+data Paper = Paper
+  { paperTitle :: String
+  , paperAuthors :: [String]
+  , paperYear :: Int
+  , paperUrl :: String
+  } deriving (Generic, Show)
+
+-- | Algorithm variant metadata
+data Variant = Variant
+  { variantId :: String
+  , variantName :: String
+  , variantDescription :: String
+  } deriving (Generic, Show)
+
+-- | Inference rule metadata
+data Rule = Rule
+  { metaRuleId :: String -- Renamed to avoid conflict with Derivation.ruleId
+  , metaRuleName :: String
+  , metaRulePremises :: [String]
+  , metaRuleConclusion :: String
+  , metaRuleDescription :: Maybe String
+  , metaRuleReduction :: Maybe String -- For worklist-style rules
+  } deriving (Generic, Show)
+
+-- | Rule group for contextual-style algorithms
+data RuleGroup = RuleGroup
+  { groupId :: String
+  , groupName :: String
+  , groupDescription :: Maybe String
+  , groupFormula :: Maybe String
+  , groupRules :: [Rule]
+  } deriving (Generic, Show)
+
+-- | Algorithm metadata
+data AlgMeta = AlgMeta
+  { metaId :: String
+  , metaName :: String
+  , metaLabels :: [String]
+  , metaViewMode :: String -- "tree" or "linear"
+  , metaMode :: String -- "inference" or "subtyping"
+  , metaPaper :: Paper
+  , metaVariants :: Maybe [Variant]
+  , metaDefaultVariant :: Maybe String
+  , metaRules :: [Rule]
+  , metaRuleGroups :: Maybe [RuleGroup] -- For contextual-style rules
+  , metaVariantRules :: Maybe [(String, [RuleGroup])] -- For variant-specific rules
+  } deriving (Generic, Show)
+
+-- Custom ToJSON instances to match the frontend format
+instance ToJSON Paper where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 5 } -- Remove "paper" prefix
+
+instance ToJSON Variant where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 7 } -- Remove "variant" prefix
+
+instance ToJSON Rule where
+  toJSON = genericToJSON defaultOptions { 
+    fieldLabelModifier = \s -> case s of
+      "metaRuleId" -> "Id"
+      "metaRuleName" -> "Name"
+      "metaRulePremises" -> "Premises"
+      "metaRuleConclusion" -> "Conclusion"
+      "metaRuleDescription" -> "Description"
+      "metaRuleReduction" -> "Reduction"
+      _ -> drop 4 s -- Remove "meta" prefix for other fields
+  }
+
+instance ToJSON RuleGroup where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 5 } -- Remove "group" prefix
+
+instance ToJSON AlgMeta where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 4 } -- Remove "meta" prefix
+
+-- | Collect all algorithm metadata
+getAllMeta :: [AlgMeta] -> String
+getAllMeta = L8.unpack . encode

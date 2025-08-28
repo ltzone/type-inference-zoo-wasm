@@ -3,17 +3,16 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Typing.DK.Worklist.IU (runIU) where
+module Typing.DK.Worklist.IU (runIU, iuMeta) where
 
 import Typing.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, initWL, runInfer, substWLOrd)
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Rule (..))
 import Syntax (Trm (..), Typ (..), latexifyVar, pattern TAll, pattern TLam)
 import Unbound.Generics.LocallyNameless
-  ( Fresh (fresh),
-    Subst (subst),
+  ( Subst (subst),
     bind,
     fv,
     substBind,
@@ -233,3 +232,24 @@ infer rule ws = do
 
 runIU :: Trm -> InferResult
 runIU tm = runInfer infer (initWL tm)
+
+-- IU algorithm metadata
+iuMeta :: AlgMeta
+iuMeta = AlgMeta
+  { metaId = "IU"
+  , metaName = "Worklist (Intersection and Union)"
+  , metaLabels = ["Global", "Unification", "Worklist", "System F", "Dunfield-Krishnaswami", "Higher-Rank", "Implicit", "Explicit Type Application", "Intersection-Union"]
+  , metaViewMode = "linear"
+  , metaMode = "inference"
+  , metaPaper = Paper
+    { paperTitle = "Bidirectional Higher-Rank Polymorphism with Intersection and Union Types"
+    , paperAuthors = ["Shengyi Jiang", "Chen Cui", "Bruno C. d. S. Oliveira"]
+    , paperYear = 2025
+    , paperUrl = "https://i.cs.hku.hk/~bruno/papers/popl25_hrp.pdf"
+    }
+  , metaVariants = Nothing
+  , metaDefaultVariant = Nothing
+  , metaRules = [Rule "placeholder" "TBA" [] "\\text{Rules will be added soon.}" Nothing Nothing]
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
+  }
