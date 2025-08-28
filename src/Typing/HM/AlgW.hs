@@ -8,7 +8,7 @@ import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.List (intercalate)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..), Example (..))
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll)
 import Unbound.Generics.LocallyNameless hiding (Subst)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -195,4 +195,21 @@ algWMeta = AlgMeta
     ]
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    , Example
+      { exampleName = "Identity"
+      , exampleExpression = "\\x. x"
+      , exampleDescription = "The identity function"
+      }
+    , Example
+      { exampleName = "Let-Polymorphism"
+      , exampleExpression = "let id = (\\x. x) in (id 1, id True)"
+      , exampleDescription = "id can be instantiated with different types"
+      }
+    ]
   }

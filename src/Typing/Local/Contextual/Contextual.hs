@@ -11,7 +11,7 @@ import Data.Data (Typeable)
 import Data.Foldable (find)
 import Data.List (intercalate)
 import GHC.Generics (Generic)
-import Lib (Derivation (..), InferMonad, InferResult (..), runInferMonad, AlgMeta (..), Paper (..), Rule (..), RuleGroup (..), Variant (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), runInferMonad, AlgMeta (..), Paper (..), Rule (..), RuleGroup (..), Variant (..), Example (..))
 import Syntax (TmVar, Trm (..), Typ (..), latexifyVar)
 import Unbound.Generics.LocallyNameless (Alpha, aeq, unbind)
 
@@ -207,5 +207,12 @@ contextualMeta = AlgMeta
           ]
         }
       ])
+    ]
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
     ]
   }

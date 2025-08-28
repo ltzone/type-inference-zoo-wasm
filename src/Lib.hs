@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Lib (InferMonad, runInferMonad, freshTVar, freshLVar, break3, Derivation (..), InferResult (..), toJson, Paper(..), Variant(..), Rule(..), RuleGroup(..), AlgMeta(..), getAllMeta) where
+module Lib (InferMonad, runInferMonad, freshTVar, freshLVar, break3, Derivation (..), InferResult (..), toJson, Paper(..), Variant(..), Rule(..), RuleGroup(..), Example(..), AlgMeta(..), getAllMeta) where
 
 import Control.Monad.RWS (MonadTrans (lift), RWST, get, put, runRWST)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT)
@@ -128,6 +128,14 @@ data AlgMeta = AlgMeta
   , metaRules :: [Rule]
   , metaRuleGroups :: Maybe [RuleGroup] -- For contextual-style rules
   , metaVariantRules :: Maybe [(String, [RuleGroup])] -- For variant-specific rules
+  , metaExamples :: [Example] -- Algorithm examples
+  } deriving (Generic, Show)
+
+-- | Example metadata
+data Example = Example
+  { exampleName :: String
+  , exampleExpression :: String
+  , exampleDescription :: String
   } deriving (Generic, Show)
 
 -- Custom ToJSON instances to match the frontend format
@@ -148,6 +156,9 @@ instance ToJSON Rule where
       "metaRuleReduction" -> "Reduction"
       _ -> drop 4 s -- Remove "meta" prefix for other fields
   }
+
+instance ToJSON Example where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 7 } -- Remove "example" prefix
 
 instance ToJSON RuleGroup where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = drop 5 } -- Remove "group" prefix

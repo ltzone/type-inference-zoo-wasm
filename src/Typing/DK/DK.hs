@@ -10,7 +10,7 @@ import Control.Monad.Error.Class (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Data.List (intercalate)
-import Lib (Derivation (..), InferMonad, InferResult (..), break3, freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), break3, freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..), Example (..))
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, wrapVar, pattern TAll)
 import Unbound.Generics.LocallyNameless (bind, fv, subst, unbind)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -316,4 +316,11 @@ dkMeta = AlgMeta
     ]
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    ]
   }

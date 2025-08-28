@@ -9,7 +9,7 @@ import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Bifunctor (bimap)
 import Data.Foldable (find)
 import Data.List (intercalate)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..), Example (..))
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll, wrapVar)
 import Unbound.Generics.LocallyNameless
 
@@ -264,4 +264,11 @@ algRMeta = AlgMeta
     ]
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    ]
   }

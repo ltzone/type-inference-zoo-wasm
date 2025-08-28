@@ -9,7 +9,7 @@ import Typing.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklis
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Rule (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Rule (..), Example (..))
 import Syntax (Trm (..), Typ (..), latexifyVar)
 import Unbound.Generics.LocallyNameless
   ( Fresh (fresh),
@@ -296,4 +296,11 @@ boundedMeta = AlgMeta
   , metaRules = [Rule "placeholder" "TBA" [] "\\text{Rules will be added soon.}" Nothing Nothing]
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    ]
   }

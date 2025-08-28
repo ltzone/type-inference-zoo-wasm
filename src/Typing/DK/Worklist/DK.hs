@@ -10,7 +10,7 @@ import Typing.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklis
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Rule (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Rule (..), Example (..))
 import Syntax (Trm (..), Typ (..), latexifyVar, pattern TAll)
 import Unbound.Generics.LocallyNameless
   ( Fresh (fresh),
@@ -220,6 +220,13 @@ worklistMeta = AlgMeta
   , metaRules = worklistRules
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    ]
   }
 
 -- All Worklist rules

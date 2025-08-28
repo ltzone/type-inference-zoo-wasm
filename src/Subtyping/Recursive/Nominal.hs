@@ -3,7 +3,7 @@
 module Subtyping.Recursive.Nominal (runNominalSubtyping, runNominalSubtypingAlg, SubtypingResult (..), revisitingMeta) where
 
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, toJson, AlgMeta (..), Paper (..), Rule (..), Variant (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, toJson, AlgMeta (..), Paper (..), Rule (..), Variant (..), Example (..))
 import Parser (parseTyp)
 import Syntax (Typ (..))
 import Unbound.Generics.LocallyNameless (subst, unbind)
@@ -243,4 +243,26 @@ revisitingMeta = AlgMeta
     ]
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Positive Recursive Types"
+      , exampleExpression = "mu a. Top -> a <: mu a. Int -> a"
+      , exampleDescription = "Positive recursive subtyping"
+      }
+    , Example
+      { exampleName = "Negative Recursive Types (Fail)"
+      , exampleExpression = "mu a. a -> Int <: mu a. a -> Top"
+      , exampleDescription = "Negative recursive subtyping"
+      }
+    , Example
+      { exampleName = "Negative Recursive Types + Top"
+      , exampleExpression = "mu a. Top -> Int <: mu a. a -> Int"
+      , exampleDescription = "Recursive type subtyping"
+      }
+    , Example
+      { exampleName = "Nested Recursive Subtyping"
+      , exampleExpression = "mu a. Top -> (mu b. b -> a) <: mu a. Int -> (mu b. b -> a)"
+      , exampleDescription = "Nested recursive subtyping"
+      }
+    ]
   }
