@@ -7,7 +7,7 @@ module Subtyping.Recursive.Distributive where
 
 
 import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad)
-import Syntax (Typ (..), LabelVar)
+import Syntax (Typ (..), LabelVar, TyVar)
 import Unbound.Generics.LocallyNameless (subst, unbind, swaps)
 import Unbound.Generics.LocallyNameless.Unsafe (unsafeUnbind)
 import Unbound.Generics.LocallyNameless.Name (AnyName (..))
@@ -17,6 +17,9 @@ import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Unbound.Generics.PermM (single)
 import Subtyping.Recursive.Lib (SubtypingResult(..))
 import Subtyping.Recursive.Translate (translation)
+import Control.Monad.ST (ST)
+import Data.List (subsequences)
+import Unbound.Generics.LocallyNameless (s2n)
 
 
 -- controlled splitting
@@ -191,6 +194,29 @@ bcdSubDeriv leftTyp rightTyp = do
         children = [drv, drv1, drv2]
       })
     Nothing -> bcdSubDerivAux leftTyp rightTyp where
+      tryIntersectionDeriv :: Typ -> Typ -> Typ -> InferMonad (Bool, Derivation)
+      tryIntersectionDeriv s1 s2 t = do
+        (r1, d1) <- bcdSubDeriv s1 t
+        (r2, d2) <- bcdSubDeriv s2 t
+        if r1 then return
+          (True, Derivation {
+            ruleId = "S-andl",
+            expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
+            children = [d1]
+          })
+        else if r2 then return
+          (True, Derivation {
+            ruleId = "S-andr",
+            expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
+            children = [d2]
+          })
+        else return
+          (False, Derivation {
+            ruleId = "S-and",
+            expression = show (TIntersection s1 s2) ++ "\\textcolor{red}{\\nleq}" ++ show t,
+            children = [d1, d2]
+          })
+
       bcdSubDerivAux :: Typ -> Typ -> InferMonad (Bool, Derivation)
       bcdSubDerivAux _ rty | toplike rty = do
         return (True, Derivation {
@@ -228,28 +254,6 @@ bcdSubDeriv leftTyp rightTyp = do
           expression = show (TArr s1 s2) ++ " <: " ++ show (TArr t1 t2),
           children = [d1, d2]
         })
-      bcdSubDerivAux (TIntersection s1 s2) t = do
-        (r1, d1) <- bcdSubDeriv s1 t
-        (r2, d2) <- bcdSubDeriv s2 t
-        if r1 then return (
-          True, Derivation {
-            ruleId = "S-andl",
-            expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
-            children = [d1]
-          }
-          ) else if r2 then return (
-          True, Derivation {
-            ruleId = "S-andr",
-            expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
-            children = [d2]
-          }
-          ) else return (
-          False, Derivation {
-            ruleId = "S-and",
-            expression = show (TIntersection s1 s2) ++ " <: " ++ show t,
-            children = [d1, d2]
-          }
-          ) 
       bcdSubDerivAux (TLabel l1 a) (TLabel l2 b) =
         if l1 == l2 then do
           (r, d) <- bcdSubDeriv a b
@@ -294,21 +298,149 @@ bcdSubDeriv leftTyp rightTyp = do
                 expression = show (TTranslatedMu bndA) ++ " <: " ++ show (TTranslatedMu bndB),
                 children = [drvB, d]
               })
+            -- fall back to intersection rules
+            TIntersection s1 s2 -> tryIntersectionDeriv s1 s2 (TTranslatedMu bndB)
             _ -> return (False, Derivation {
               ruleId = "S-fail",
               expression = "left type is not recursive: " ++ show a,
               children = [drvB]
             })
-          Just _ -> return (False, Derivation {
-            ruleId = "S-fail",
-            expression = "[TODO] right type is distributive: " ++ show (TTranslatedMu bndB),
-            children = [drvB]
-          })
+
+          -- The right type body is splittble, while the recursive type is still ordinary
+          -- try the generalized rules:
+          Just _ -> do
+            -- open the left type with the same right type variable
+            aOpenLis <- mcodPos xB lB a
+            let aOpenCombs = allMcod aOpenLis
+            results <- mapM (\aOpen -> do
+                isNegA <- elem lB <$> freeLabelNeg True aOpen
+                if isNegA then do
+                  -- isomorphic test
+                  aOpen' <- dropLabel lB aOpen
+                  bodyB' <- dropLabel lB bodyB
+                  (r1, d1) <- bcdSubDeriv aOpen' bodyB'
+                  (r2, d2) <- bcdSubDeriv bodyB' aOpen'
+                  let ok = r1 && r2
+                  return (ok, Derivation {
+                    ruleId = "S-mu-neg",
+                    expression = show a ++ " <: " ++ show (TTranslatedMu bndB),
+                    children = [Derivation {
+                      ruleId = "S-mu-neg-iso",
+                      expression = show aOpen ++ " ~\\equiv~ " ++ show bodyB,
+                      children = [d1, d2]
+                    }]
+                  })
+                else do
+                  -- subtyping test
+                    (ok, d) <- bcdSubDeriv aOpen bodyB
+                    return (ok, Derivation {
+                      ruleId = "S-mu-pos",
+                      expression = show a ++ " <: " ++ show (TTranslatedMu bndB),
+                      children = [Derivation {
+                       ruleId = "S-mu-pos-sub",
+                       expression = show aOpen ++ " <: " ++ show bodyB,
+                       children = [d]
+                      }
+                      ]
+                    })
+              ) aOpenCombs
+            let firstOk = foldr (\(ok, d) acc -> if ok then Just (ok, d) else acc) Nothing results
+            case firstOk of
+              Just (ok, d) -> return (ok, d)
+              Nothing -> return (False, Derivation {
+                ruleId = "S-mu-fail",
+                expression = show a ++ " \\nleq " ++ show (TTranslatedMu bndB),
+                children = map snd results
+                })
+      bcdSubDerivAux (TIntersection s1 s2) t = tryIntersectionDeriv s1 s2 t
       bcdSubDerivAux _ _ = return (False, Derivation {
         ruleId = "S-fail",
         expression = "no applicable rule for: " ++ show leftTyp ++ " <: " ++ show rightTyp,
         children = []
       })
+
+
+parts :: Typ -> [Typ]
+parts (TIntersection a b) = parts a ++ parts b
+parts (TArr a b) = [TArr a b' | b' <- parts b]
+parts (TLabel l a) = [TLabel l a' | a' <- parts a]
+parts t = [t]
+
+
+mcodPos :: TyVar -> LabelVar -> Typ -> InferMonad [Typ]
+mcodPos x l (TIntersection a b) = do
+  as <- mcodPos x l a
+  bs <- mcodPos x l b
+  return (as ++ bs)
+mcodPos x l (TTranslatedMu bnd) = do
+  ((y, l'), body) <- unbind bnd
+  isBodyNeg <- elem l' <$> freeLabelNeg True body
+  if isBodyNeg then
+    return [subst y (TVar x) (swaps (single (AnyName l') (AnyName l)) body)]
+  else
+    return $ parts $ subst y (TVar x) (swaps (single (AnyName l') (AnyName l)) body)
+mcodPos _ _ _ = return []
+
+
+foldSAnd :: [Typ] -> Typ
+foldSAnd [] = TTop
+foldSAnd [t] = t
+foldSAnd (t : ts) = TIntersection t (foldSAnd ts)
+
+
+
+allMcod :: [Typ] -> [Typ]
+allMcod types = map foldSAnd (subsequences types)
+
+
+
+dropLabel :: LabelVar -> Typ -> InferMonad Typ
+dropLabel l TTop = return TTop
+dropLabel l TBot = return TBot
+dropLabel l TInt = return TInt
+dropLabel l TBool = return TBool
+dropLabel l (TVar v) = return $ TVar v
+dropLabel l (ETVar v) = return $ ETVar v
+dropLabel l (STVar v) = return $ STVar v
+dropLabel l (TArr a b) = do 
+  a' <- dropLabel l a
+  b' <- dropLabel l b
+  return $ TArr a' b'
+dropLabel l (TAllB v t) = do
+  (x, bnd) <- unbind v
+  v' <- dropLabel l bnd
+  t' <- dropLabel l t
+  return $ TAllB (bind x v') t'
+dropLabel l (TIntersection a b) = do
+  a' <- dropLabel l a
+  b' <- dropLabel l b
+  return $ TIntersection a' b'
+dropLabel l (TUnion a b) = do
+  a' <- dropLabel l a
+  b' <- dropLabel l b
+  return $ TUnion a' b'
+dropLabel l (TTuple ts) = do
+  ts' <- mapM (dropLabel l) ts
+  return $ TTuple ts'
+dropLabel l (TRecursive b) = do
+  (x, bnd) <- unbind b
+  bnd' <- dropLabel l bnd
+  return $ TRecursive (bind x bnd')
+dropLabel l (TLabel l' a) | l == l' = return $ TLabel l' TBool
+                          | otherwise = do
+    a' <- dropLabel l a
+    return $ TLabel l' a'
+dropLabel l (TLabeled l' bnd) | l == l' = return $ TLabeled l' (bind (s2n "x") TBool)
+                              | otherwise = do
+    (x, a) <- unbind bnd
+    a' <- dropLabel l a
+    return $ TLabeled l' (bind x a')
+dropLabel l (TTranslatedMu bnd) = do
+  ((x, l'), body) <- unbind bnd
+  body' <- dropLabel l body
+  return $ TTranslatedMu (bind (x, l') body')
+
+
 
 
 runDistributiveSubtyping :: Typ -> Typ -> InferResult
@@ -326,9 +458,9 @@ runDistributiveSubtyping s t =case runInferMonad $ do
     , subtypingDerivation = [ d3, d1, d2]
     , subtypingErrorMsg = Nothing
     }
-  of 
+  of
     Left errs -> InferResult False Nothing [] (Just $ unlines errs) False
-    Right (res, msgs) -> 
+    Right (res, msgs) ->
       let infoSteps = map (\msg -> Derivation "Info" msg []) msgs
        in InferResult
             (isSubtype res)
