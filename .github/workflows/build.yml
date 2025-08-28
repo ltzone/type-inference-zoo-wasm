@@ -9,6 +9,12 @@ jobs:
     name: Build WASM
     runs-on: ubuntu-latest
 
+    # Optional: set this repo variable to your Cachix cache name (e.g. "your-cache")
+    # Settings → Secrets and variables → Actions → Variables → New variable
+    # Or leave it unset to skip Cachix.
+    env:
+      CACHIX_CACHE: ${{ vars.CACHIX_CACHE }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,42 +24,47 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Cache Nix store
-        uses: actions/cache@v4
+      # Optional binary cache (pull/push) via Cachix:
+      # - Set repo variable CACHIX_CACHE to your Cachix cache name.
+      # - Set secret CACHIX_AUTH_TOKEN to push; if missing, it will still pull from a public cache.
+      - name: Use Cachix (if configured)
+        if: ${{ env.CACHIX_CACHE != '' }}
+        uses: cachix/cachix-action@v14
         with:
-          path: |
-            ~/.cache/nix
-            /nix
-          key: ${{ runner.os }}-nix-${{ hashFiles('flake.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-nix-
+          name: ${{ env.CACHIX_CACHE }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
+      # Cache Cabal artifacts (user-writable only).
+      # This speeds up dependency resolution and rebuilds across runs.
       - name: Cache Cabal store
+        id: cache-cabal
         uses: actions/cache@v4
         with:
           path: |
             ~/.cabal/store
             ~/.cabal/packages
             ~/.cabal/logs
-          key: ${{ runner.os }}-cabal-${{ hashFiles('package.yaml', 'stack.yaml') }}-${{ hashFiles('flake.lock') }}
+          key: ${{ runner.os }}-cabal-wasm32-wasi-${{ hashFiles('**/*.cabal', 'cabal.project*', 'flake.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cabal-${{ hashFiles('package.yaml', 'stack.yaml') }}-
+            ${{ runner.os }}-cabal-wasm32-wasi-
             ${{ runner.os }}-cabal-
 
-      - name: Build with cached dependencies
-        working-directory: .
+      - name: Show Cabal cache result
+        run: echo "cabal cache hit = ${{ steps.cache-cabal.outputs.cache-hit }}"
+
+      - name: Build (Nix dev shell + Cabal)
+        shell: bash
         run: |
-          export NIX_STORE_DIR=/nix/store
-          export NIX_STATE_DIR=/nix/var/nix
-          
-          nix develop --command bash -c "
+          set -euxo pipefail
+          nix develop --command bash -c '
             wasm32-wasi-cabal update
             wasm32-wasi-cabal build --dependencies-only
             wasm32-wasi-cabal build
-          "
+          '
 
       - name: Prepare WASM binary
         run: |
+          set -euxo pipefail
           mkdir -p dist
           cp ./dist-newstyle/build/wasm32-wasi/ghc-*/type-inference-zoo-0.1.0.0/x/type-inference-zoo-exe/build/type-inference-zoo-exe/type-inference-zoo-exe.wasm dist/zoo.wasm
 
