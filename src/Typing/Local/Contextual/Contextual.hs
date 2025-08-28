@@ -142,9 +142,7 @@ contextualMeta = AlgMeta
       , groupDescription = Just "Under environment $\\Gamma$, expression $e$ has type $\\tau$"
       , groupFormula = Just "\\boxed{\\Gamma \\vdash e : \\tau}"
       , groupRules = 
-        [ Rule "CTVar" "CTVar" ["x : \\sigma \\in \\Gamma"] "\\Gamma \\vdash x : \\sigma" Nothing Nothing
-        , Rule "CTApp" "CTApp" ["\\Gamma \\vdash e_1 : \\tau_1 \\to \\tau_2", "\\Gamma \\vdash e_2 : \\tau_1"] "\\Gamma \\vdash e_1~e_2 : \\tau_2" Nothing Nothing
-        , Rule "CTAbs" "CTAbs" ["\\Gamma, x : \\tau_1 \\vdash e : \\tau_2"] "\\Gamma \\vdash \\lambda x.~e : \\tau_1 \\to \\tau_2" Nothing Nothing
+        [ Rule "ALit" "ALit" ["x : \\sigma \\in \\Gamma"] "\\Gamma \\square \\Rightarrow i \\Rightarrow \\textt{Int}" Nothing Nothing
         ]
       }
     , RuleGroup
