@@ -55,7 +55,7 @@ jobs:
       - name: Prepare WASM binary
         run: |
           mkdir -p dist
-          cp ./dist-newstyle/build/wasm32-wasi/ghc-*/type-inference-zoo-0.1.0.0/x/type-inference-zoo-exe/build/type-inference-zoo-exe/type-inference-zoo-exe.wasm dist/bin.wasm
+          cp ./dist-newstyle/build/wasm32-wasi/ghc-*/type-inference-zoo-0.1.0.0/x/type-inference-zoo-exe/build/type-inference-zoo-exe/type-inference-zoo-exe.wasm dist/zoo.wasm
 
       - name: Upload Artifact to R2 Object Storage
         uses: ryand56/r2-upload-action@latest
