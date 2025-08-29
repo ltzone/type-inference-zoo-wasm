@@ -1,4 +1,4 @@
-module Algorithms (runAlgorithmInference, runAlgorithmSubtyping, getAllAlgorithmMeta) where
+module Algorithms (runAlgorithmInference, runAlgorithmSubtyping, runAlgorithmInferenceWithVariant, runAlgorithmSubtypingWithVariant, getAllAlgorithmMeta) where
 
 import Lib (AlgMeta (..), InferResult (..))
 import Syntax (Trm, Typ)
@@ -64,6 +64,14 @@ runAlgorithmSubtyping id' lty rty =
 -- | Find algorithm by ID
 findAlg :: String -> Maybe AlgEntry
 findAlg targetId = foldr (\x acc -> if algId x == targetId then Just x else acc) Nothing allAlgs
+
+-- | Run inference for a specific algorithm with variant (for now, ignore variant)
+runAlgorithmInferenceWithVariant :: String -> Maybe String -> Trm -> InferResult
+runAlgorithmInferenceWithVariant id' _variant tm = runAlgorithmInference id' tm
+
+-- | Run subtyping for a specific algorithm with variant (for now, ignore variant)
+runAlgorithmSubtypingWithVariant :: String -> Maybe String -> Typ -> Typ -> InferResult
+runAlgorithmSubtypingWithVariant id' _variant lty rty = runAlgorithmSubtyping id' lty rty
 
 -- | Get all algorithm metadata
 getAllAlgorithmMeta :: [AlgMeta]
