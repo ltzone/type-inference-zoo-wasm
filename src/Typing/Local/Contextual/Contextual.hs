@@ -135,77 +135,8 @@ contextualMeta = AlgMeta
     ]
   , metaDefaultVariant = Just "base"
   , metaRules = []
-  , metaRuleGroups = Just
-    [ RuleGroup
-      { groupId = "typing"
-      , groupName = "Typing"
-      , groupDescription = Just "Under environment $\\Gamma$, expression $e$ has type $\\tau$"
-      , groupFormula = Just "\\boxed{\\Gamma \\vdash e : \\tau}"
-      , groupRules = 
-        [ Rule "ALit" "ALit" ["x : \\sigma \\in \\Gamma"] "\\Gamma \\square \\Rightarrow i \\Rightarrow \\textt{Int}" Nothing Nothing
-        ]
-      }
-    , RuleGroup
-      { groupId = "matching"
-      , groupName = "Matching"
-      , groupDescription = Just "Type matching produces substitution $S$ from types $\\tau_1$ and $\\tau_2$"
-      , groupFormula = Just "\\boxed{\\tau_1 \\triangleleft \\tau_2 \\Rightarrow S}"
-      , groupRules = 
-        [ Rule "MTVar" "MTVar" ["\\alpha \\text{ fresh}"] "\\alpha \\triangleleft \\tau \\Rightarrow [\\alpha \\mapsto \\tau]" Nothing Nothing
-        , Rule "MTArr" "MTArr" ["\\tau_1 \\triangleleft \\tau_3 \\Rightarrow S_1", "S_1(\\tau_2) \\triangleleft S_1(\\tau_4) \\Rightarrow S_2"] "\\tau_1 \\to \\tau_2 \\triangleleft \\tau_3 \\to \\tau_4 \\Rightarrow S_2 \\circ S_1" Nothing Nothing
-        ]
-      }
-    ]
-  , metaVariantRules = Just
-    [ ("base", 
-      [ RuleGroup
-        { groupId = "typing"
-        , groupName = "Typing"
-        , groupDescription = Just "Under environment $\\Gamma$, expression $e$ has type $\\tau$"
-        , groupFormula = Just "\\boxed{\\Gamma \\vdash e : \\tau}"
-        , groupRules = 
-          [ Rule "CTVar" "CTVar" ["x : \\sigma \\in \\Gamma"] "\\Gamma \\vdash x : \\sigma" Nothing Nothing
-          , Rule "CTApp" "CTApp" ["\\Gamma \\vdash e_1 : \\tau_1 \\to \\tau_2", "\\Gamma \\vdash e_2 : \\tau_1"] "\\Gamma \\vdash e_1~e_2 : \\tau_2" Nothing Nothing
-          , Rule "CTAbs" "CTAbs" ["\\Gamma, x : \\tau_1 \\vdash e : \\tau_2"] "\\Gamma \\vdash \\lambda x.~e : \\tau_1 \\to \\tau_2" Nothing Nothing
-          ]
-        }
-      ])
-    , ("extension",
-      [ RuleGroup
-        { groupId = "typing"
-        , groupName = "Typing"
-        , groupDescription = Just "Under environment $\\Gamma$, expression $e$ has type $\\tau$"
-        , groupFormula = Just "\\boxed{\\Gamma \\vdash e : \\tau}"
-        , groupRules = 
-          [ Rule "CTVar" "CTVar" ["x : \\sigma \\in \\sigma"] "\\Gamma \\vdash x : \\sigma" Nothing Nothing
-          , Rule "CTApp" "CTApp" ["\\Gamma \\vdash e_1 : \\tau_1 \\to \\tau_2", "\\Gamma \\vdash e_2 : \\tau_1"] "\\Gamma \\vdash e_1~e_2 : \\tau_2" Nothing Nothing
-          , Rule "CTAbs" "CTAbs" ["\\Gamma, x : \\tau_1 \\vdash e : \\tau_2"] "\\Gamma \\vdash \\lambda x.~e : \\tau_1 \\to \\tau_2" Nothing Nothing
-          , Rule "CTLet" "CTLet" ["\\Gamma \\vdash e_1 : \\tau_1", "\\Gamma, x : \\tau_1 \\vdash e_2 : \\tau_2"] "\\Gamma \\vdash \\text{let } x = e_1 \\text{ in } e_2 : \\tau_2" Nothing Nothing
-          ]
-        }
-      , RuleGroup
-        { groupId = "matching"
-        , groupName = "Matching"
-        , groupDescription = Just "Type matching produces substitution $S$ from types $\\tau_1$ and $\\tau_2$"
-        , groupFormula = Just "\\boxed{\\tau_1 \\triangleleft \\tau_2 \\Rightarrow S}"
-        , groupRules = 
-          [ Rule "MTVar" "MTVar" ["\\alpha \\text{ fresh}"] "\\alpha \\triangleleft \\tau \\Rightarrow [\\alpha \\mapsto \\tau]" Nothing Nothing
-          , Rule "MTArr" "MTArr" ["\\tau_1 \\triangleleft \\tau_3 \\Rightarrow S_1", "S_1(\\tau_2) \\triangleleft S_1(\\tau_4) \\Rightarrow S_2"] "\\tau_1 \\to \\tau_2 \\triangleleft \\tau_3 \\to \\tau_4 \\Rightarrow S_2 \\circ S_1" Nothing Nothing
-          , Rule "MTUnit" "MTUnit" [] "\\text{unit} \\triangleleft \\text{unit} \\Rightarrow \\text{id}" Nothing Nothing
-          ]
-        }
-      , RuleGroup
-        { groupId = "inference"
-        , groupName = "Inference"
-        , groupDescription = Just "Type inference for expressions without explicit type annotations"
-        , groupFormula = Just "\\boxed{\\Gamma \\vdash e \\Rightarrow \\tau}"
-        , groupRules = 
-          [ Rule "InfVar" "InfVar" ["x : \\sigma \\in \\Gamma"] "\\Gamma \\vdash x \\Rightarrow \\sigma" Nothing Nothing
-          , Rule "InfApp" "InfApp" ["\\Gamma \\vdash e_1 \\Rightarrow \\tau_1 \\to \\tau_2", "\\Gamma \\vdash e_2 \\Leftarrow \\tau_1"] "\\Gamma \\vdash e_1~e_2 \\Rightarrow \\tau_2" Nothing Nothing
-          ]
-        }
-      ])
-    ]
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
   , metaExamples = 
     [ Example
       { exampleName = "Trivial Application"

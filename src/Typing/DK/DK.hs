@@ -10,7 +10,7 @@ import Control.Monad.Error.Class (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Data.List (intercalate)
-import Lib (Derivation (..), InferMonad, InferResult (..), break3, freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..), Example (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), break3, freshTVar, runInferMonad, AlgMeta (..), Paper (..), Example (..))
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, wrapVar, pattern TAll)
 import Unbound.Generics.LocallyNameless (bind, fv, subst, unbind)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -304,16 +304,7 @@ dkMeta = AlgMeta
     }
   , metaVariants = Nothing
   , metaDefaultVariant = Nothing
-  , metaRules = 
-    [ Rule
-      { metaRuleId = "placeholder"
-      , metaRuleName = "TBA"
-      , metaRulePremises = []
-      , metaRuleConclusion = "\\text{Rules will be added soon.}"
-      , metaRuleDescription = Nothing
-      , metaRuleReduction = Nothing
-      }
-    ]
+  , metaRules = []
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
   , metaExamples = 

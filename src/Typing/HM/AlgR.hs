@@ -9,7 +9,7 @@ import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Bifunctor (bimap)
 import Data.Foldable (find)
 import Data.List (intercalate)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta (..), Paper (..), Rule (..), Example (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta (..), Paper (..), Example (..))
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, pattern TAll, wrapVar)
 import Unbound.Generics.LocallyNameless
 
@@ -252,16 +252,7 @@ algRMeta = AlgMeta
     }
   , metaVariants = Nothing
   , metaDefaultVariant = Nothing
-  , metaRules = 
-    [ Rule
-      { metaRuleId = "placeholder"
-      , metaRuleName = "TBA"
-      , metaRulePremises = []
-      , metaRuleConclusion = "\\text{Rules will be added soon.}"
-      , metaRuleDescription = Nothing
-      , metaRuleReduction = Nothing
-      }
-    ]
+  , metaRules = []
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
   , metaExamples = 

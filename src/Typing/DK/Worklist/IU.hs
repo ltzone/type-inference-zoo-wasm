@@ -9,7 +9,7 @@ import Typing.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklis
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Rule (..), Example (..))
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Example (..))
 import Syntax (Trm (..), Typ (..), latexifyVar, pattern TAll, pattern TLam)
 import Unbound.Generics.LocallyNameless
   ( Subst (subst),
@@ -249,7 +249,7 @@ iuMeta = AlgMeta
     }
   , metaVariants = Nothing
   , metaDefaultVariant = Nothing
-  , metaRules = [Rule "placeholder" "TBA" [] "\\text{Rules will be added soon.}" Nothing Nothing]
+  , metaRules = []
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
   , metaExamples = 

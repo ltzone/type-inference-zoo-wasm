@@ -1,6 +1,6 @@
 module Subtyping.Recursive.Fsubmu (fsubmuMeta) where
 
-import Lib (AlgMeta (..), Paper (..), Rule (..), Example (..))
+import Lib (AlgMeta (..), Paper (..), Example (..))
 
 -- Fsubmu algorithm metadata
 fsubmuMeta :: AlgMeta
@@ -18,7 +18,7 @@ fsubmuMeta = AlgMeta
     }
   , metaVariants = Nothing
   , metaDefaultVariant = Nothing
-  , metaRules = [Rule "placeholder" "TBA" [] "\\text{Rules will be added soon.}" Nothing Nothing]
+  , metaRules = []
   , metaRuleGroups = Nothing
   , metaVariantRules = Nothing
   , metaExamples = 
