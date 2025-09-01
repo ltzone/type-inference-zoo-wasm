@@ -3,10 +3,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Subtyping.Recursive.Distributive where
+module Subtyping.Recursive.Distributive (distributiveMeta, runDistributiveSubtyping) where
 
 
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, AlgMeta(..), Paper (..), Example (..))
 import Syntax (Typ (..), LabelVar, TyVar)
 import Unbound.Generics.LocallyNameless (subst, unbind, swaps)
 import Unbound.Generics.LocallyNameless.Unsafe (unsafeUnbind)
@@ -22,8 +22,66 @@ import Data.List (subsequences)
 import Unbound.Generics.LocallyNameless (s2n)
 
 
--- controlled splitting
--- flag: true for cspl and False for sspl
+
+distributiveMeta :: AlgMeta
+distributiveMeta = AlgMeta
+  { metaId = "Distributive"
+  , metaName = "Distributive Subtyping by translation"
+  , metaLabels = ["Subtyping", "System Fsub", "Recursive Types"]
+  , metaViewMode = "tree"
+  , metaMode = "subtyping"
+  , metaPaper = Paper
+    { paperTitle = "Distributive Subtyping"
+    , paperAuthors = ["Litao Zhou"]
+    , paperYear = 2025
+    , paperUrl = "TBD"
+    }
+  , metaVariants = Nothing
+  , metaDefaultVariant = Nothing
+  , metaRules = []
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "The tricky case 1"
+      , exampleExpression = "(mu a. Top -> (mu b. Top -> Int)) & (mu a. Top -> (mu b. b -> Bool)) <: (mu a. a -> (mu b. (b -> Int) & (b -> Bool)))"
+      , exampleDescription = "The right type is ordinary but the body is splittable, the corner case is reached"
+      }
+    , Example
+      { exampleName = "The tricky case 2"
+      , exampleExpression = "(mu a. (mu b. b -> Int)) & (mu a. (mu b. a -> Bool)) <: (mu a. (mu b. (b -> Int) & (a -> Bool)))"
+      , exampleDescription = "This is not derivable in the source declarative rules"
+      }
+    , Example
+      { exampleName = "The tricky case 2 -- related"
+      , exampleExpression = "(mu a. (mu b. b -> Int)) & (mu a. (mu b. a -> Bool)) <: (mu a. ((mu b. (b -> Int)) & (mu b. (a -> Bool))))"
+      , exampleDescription = "One layer merge, however, should be allowed."
+      }
+    , Example
+      { exampleName = "Positive Recursive Types"
+      , exampleExpression = "mu a. Top -> a <: mu a. Int -> a"
+      , exampleDescription = "Positive recursive subtyping"
+      }
+    , Example
+      { exampleName = "Negative Recursive Types (Fail)"
+      , exampleExpression = "mu a. a -> Int <: mu a. a -> Bool"
+      , exampleDescription = "Negative recursive subtyping"
+      }
+    , Example
+      { exampleName = "Negative Recursive Types + Top"
+      , exampleExpression = "mu a. Top -> Int <: mu a. a -> Int"
+      , exampleDescription = "Recursive type subtyping"
+      }
+    , Example
+      { exampleName = "Nested Recursive Subtyping"
+      , exampleExpression = "mu a. Top -> (mu b. b -> a) <: mu a. Int -> (mu b. b -> a)"
+      , exampleDescription = "Nested recursive subtyping"
+      }
+    ]
+  }
+
+
+
 ruleSplName :: Bool -> String -> String
 ruleSplName True s = "CSpl-" ++ s
 ruleSplName False s = "SSpl-" ++ s
@@ -78,10 +136,12 @@ freeLabelNeg p t = case t of
   TTranslatedMu bnd -> do
     ((a, l), body) <- unbind bnd
     bs <- freeLabelNeg p body
-    return $ filter (/= l) $ filter (/= a) bs ++ ([l | not p])
+    return $ filter (/= l) $ filter (/= a) bs
 
 
 
+-- controlled splitting
+-- flag: true for cspl and False for sspl
 cspl :: Bool -> Typ -> InferMonad (Maybe (Typ, Typ) , Derivation)
 cspl flag (TIntersection a b) =
   return (Just (a, b), Derivation {
@@ -285,7 +345,7 @@ bcdSubDeriv leftTyp rightTyp = do
         })
       bcdSubDerivAux a (TTranslatedMu bndB) = do
         ((xB, lB), bodyB) <- unbind bndB
-        (bodySpl, drvB) <- cspl False bodyB
+        (bodySpl, drvB) <- cspl True bodyB
         case bodySpl of
           -- The right type body is ordinary, apply the conventional S-rec rule
           Nothing -> case a of
@@ -299,7 +359,13 @@ bcdSubDeriv leftTyp rightTyp = do
                 children = [drvB, d]
               })
             -- fall back to intersection rules
-            TIntersection s1 s2 -> tryIntersectionDeriv s1 s2 (TTranslatedMu bndB)
+            TIntersection s1 s2 -> do
+              (interOk, drvInter) <- tryIntersectionDeriv s1 s2 (TTranslatedMu bndB)
+              return (interOk, Derivation {
+                ruleId = "S-intersection",
+                expression = show (TIntersection s1 s2) ++ " <: " ++ show (TTranslatedMu bndB),
+                children = [drvB, drvInter]
+              })
             _ -> return (False, Derivation {
               ruleId = "S-fail",
               expression = "left type is not recursive: " ++ show a,

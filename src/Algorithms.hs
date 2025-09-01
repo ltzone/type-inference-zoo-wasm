@@ -14,6 +14,7 @@ import Typing.DK.Worklist.Bounded (boundedMeta, runBounded)
 import Typing.DK.Worklist.IU (iuMeta, runIU)
 import Subtyping.Recursive.Nominal (revisitingMeta, runNominalSubtyping)
 import Subtyping.Recursive.Fsubmu (fsubmuMeta)
+import Subtyping.Recursive.Distributive (distributiveMeta, runDistributiveSubtyping)
 
 -- | Algorithm types
 data AlgEntry 
@@ -32,6 +33,7 @@ allAlgs =
   , InferAlg "Bounded" boundedMeta runBounded
   , InferAlg "IU" iuMeta runIU
   , SubAlg "Revisiting" revisitingMeta runNominalSubtyping
+  , SubAlg "Distributive" distributiveMeta runDistributiveSubtyping
   , SubAlg "Fsubmu" fsubmuMeta (\_ _ -> InferResult False Nothing [] (Just "Fsubmu not implemented") False)
   ]
 

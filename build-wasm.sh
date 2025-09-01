@@ -45,7 +45,7 @@ echo "📁 Creating output directory..."
 mkdir -p ../type-inference-zoo-frontend/public/wasm
 
 echo "📋 Finding and copying WASM file..."
-WASM_FILE=$(find ./dist-newstyle -name "$WASM_NAME" -type f | head -n 1)
+WASM_FILE=$(find ./dist-newstyle -name "$WASM_NAME" -type f -print0 | xargs -0 ls -1t | head -n 1)
 
 if [ -z "$WASM_FILE" ]; then
     echo "❌ Error: Could not find built WASM file: $WASM_NAME"
