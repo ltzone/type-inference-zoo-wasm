@@ -1,56 +1,54 @@
 #!/bin/bash
 
-# Build script for compiling Haskell to WASM
-# This script uses GHC-WASM to compile the recursive backend to WebAssembly
+# Build script for compiling Haskell to WASM using the ghc-wasm-meta bootstrap script.
+# This ensures a stable GHC 9.6 toolchain is used.
 
 set -e
 
+# --- Configuration ---
+# Installation directory for the Wasm toolchain
+GHC_WASM_DIR="${HOME}/.ghc-wasm"
+# The specific GHC version flavour to install
+FLAVOUR="9.10"
+
+# --- 1. Install Toolchain (if not already installed) ---
+if [ ! -f "${GHC_WASM_DIR}/env" ]; then
+  echo "🔧 GHC-WASM toolchain not found. Installing flavour '${FLAVOUR}'..."
+  echo "   This will only happen once."
+  
+  # Set the FLAVOUR and run the bootstrap script
+  FLAVOUR="${FLAVOUR}" bash -c "$(curl -sS https://gitlab.haskell.org/haskell-wasm/ghc-wasm-meta/-/raw/master/bootstrap.sh)"
+else
+  echo "✅ GHC-WASM toolchain already installed."
+fi
+
+# --- 2. Activate Environment ---
+echo "📦 Activating GHC-WASM environment..."
+source "${GHC_WASM_DIR}/env"
+
+# --- 3. Build the Project ---
 echo "🚀 Building WASM from Haskell..."
 
-echo "📦 Entering nix shell with GHC-WASM..."
-echo "   Note: If you get an error about experimental features, you can add:"
-echo "   --extra-experimental-features nix-command --extra-experimental-features flakes"
-echo ""
+echo "🔧 Updating cabal packages..."
+wasm32-wasi-cabal update
 
-# Use nix shell to get the GHC-WASM environment
-if ! nix shell 'gitlab:haskell-wasm/ghc-wasm-meta?host=gitlab.haskell.org' --command bash -c "
-    echo '🔧 Updating cabal packages...'
-    wasm32-wasi-cabal update
-    
-    echo '🔨 Building WASM binary (type-inference-zoo-wasm)...'
-    if wasm32-wasi-cabal build; then
-        echo '✅ WASM build successful!'
-        exit 0
-    else
-        echo '❌ WASM build failed!'
-        echo '   Check the error messages above for dependency issues.'
-        exit 1
-    fi
-"; then
-    echo "❌ Error: Failed to build WASM using nix shell"
-    echo ""
-    echo "💡 Troubleshooting tips:"
-    echo "   1. Make sure you have Nix installed"
-    echo "   2. Try adding experimental features:"
-    echo "      nix --extra-experimental-features nix-command --extra-experimental-features flakes shell 'gitlab:haskell-wasm/ghc-wasm-meta?host=gitlab.haskell.org'"
-    echo "   3. Or add to ~/.config/nix/nix.conf:"
-    echo "      experimental-features = nix-command flakes"
+echo "🔨 Building WASM binary..."
+if ! wasm32-wasi-cabal build; then
+    echo "❌ WASM build failed!"
     exit 1
 fi
 
-TARGET="type-inference-zoo-exe"
+# --- 4. Copy the Output ---
 WASM_NAME="type-inference-zoo-exe.wasm"
 
 echo "📁 Creating output directory..."
 mkdir -p ../type-inference-zoo-frontend/public/wasm
 
 echo "📋 Finding and copying WASM file..."
-# Find the built WASM file and copy it to the frontend public directory
 WASM_FILE=$(find ./dist-newstyle -name "$WASM_NAME" -type f | head -n 1)
 
 if [ -z "$WASM_FILE" ]; then
     echo "❌ Error: Could not find built WASM file: $WASM_NAME"
-    echo "   Searched in: ./dist-newstyle"
     exit 1
 fi
 
@@ -58,12 +56,4 @@ echo "📋 Found WASM file: $WASM_FILE"
 cp "$WASM_FILE" ../type-inference-zoo-frontend/public/wasm/bin.wasm
 
 echo "✅ WASM build complete!"
-echo "   Target: $TARGET"
 echo "   Output: ../type-inference-zoo-frontend/public/wasm/bin.wasm"
-echo "   Size: $(du -h ../type-inference-zoo-frontend/public/wasm/bin.wasm | cut -f1)"
-
-echo ""
-echo "🎯 Next steps:"
-echo "   1. Run 'npm run dev' in the frontend directory"
-echo "   2. The app will now load WASM from /wasm/bin.wasm"
-echo "   3. Check browser console for WASM loading status"
