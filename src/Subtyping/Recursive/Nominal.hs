@@ -1,9 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Subtyping.Recursive.Nominal (runNominalSubtyping, runNominalSubtypingAlg, SubtypingResult (..)) where
+module Subtyping.Recursive.Nominal (runNominalSubtyping, runNominalSubtypingAlg, SubtypingResult (..), revisitingMeta) where
 
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, toJson)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, runInferMonad, toJson, AlgMeta (..), Paper (..), Rule (..), Variant (..), Example (..))
 import Parser (parseTyp)
 import Syntax (Typ (..))
 import Unbound.Generics.LocallyNameless (subst, unbind)
@@ -204,3 +204,54 @@ runNominalSubtypingAlg leftTypeStr rightTypeStr =
     (Left err, _) -> toJson $ InferResult False Nothing [] (Just $ "Source type parse error: " ++ err) False
     (_, Left err) -> toJson $ InferResult False Nothing [] (Just $ "Target type parse error: " ++ err) False
     (Right source, Right target) -> toJson $ runNominalSubtyping source target
+
+-- Subtyping algorithms metadata
+revisitingMeta :: AlgMeta
+revisitingMeta = AlgMeta
+  { metaId = "Revisiting"
+  , metaName = "Revisiting Iso-Recursive Subtyping"
+  , metaLabels = ["Subtyping", "Recursive Types"]
+  , metaViewMode = "tree"
+  , metaMode = "subtyping"
+  , metaPaper = Paper
+    { paperTitle = "Revisiting Iso-Recursive Subtyping"
+    , paperAuthors = ["Yaoda Zhou", "Jinxu Zhao", "Bruno C. d. S. Oliveira"]
+    , paperYear = 2022
+    , paperUrl = "https://i.cs.hku.hk/~bruno/papers/toplas2022.pdf"
+    }
+  , metaVariants = Just
+    [ Variant "nominal" "Nominal" "Nominal Unfolding"
+    , Variant "double" "Recursive" "Double Unfolding"
+    ]
+  , metaDefaultVariant = Just "nominal"
+  , metaRules = 
+    [ Rule "S-top" "S-top" [] "A <: \\top" Nothing Nothing
+    , Rule "S-int" "S-int" [] "\\texttt{Int} <: \\texttt{Int}" Nothing Nothing
+    , Rule "S-arrow" "S-arrow" ["B_1 <: A_1", "A_2 <: B_2"] "A_1 \\to A_2 <: B_1 \\to B_2" Nothing Nothing
+    , Rule "S-mu" "S-mu" ["A [ \\{ a : A \\} / a ] <: B [ \\{ a : B \\} / a ]"] "\\mu a.~A <: \\mu a.~B" Nothing Nothing
+    ]
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Positive Recursive Types"
+      , exampleExpression = "mu a. Top -> a <: mu a. Int -> a"
+      , exampleDescription = "Positive recursive subtyping"
+      }
+    , Example
+      { exampleName = "Negative Recursive Types (Fail)"
+      , exampleExpression = "mu a. a -> Int <: mu a. a -> Top"
+      , exampleDescription = "Negative recursive subtyping"
+      }
+    , Example
+      { exampleName = "Negative Recursive Types + Top"
+      , exampleExpression = "mu a. Top -> Int <: mu a. a -> Int"
+      , exampleDescription = "Recursive type subtyping"
+      }
+    , Example
+      { exampleName = "Nested Recursive Subtyping"
+      , exampleExpression = "mu a. Top -> (mu b. b -> a) <: mu a. Int -> (mu b. b -> a)"
+      , exampleDescription = "Nested recursive subtyping"
+      }
+    ]
+  }

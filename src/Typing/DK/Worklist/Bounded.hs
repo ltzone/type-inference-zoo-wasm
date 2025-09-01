@@ -2,14 +2,14 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Typing.DK.Worklist.Bounded (runBounded) where
+module Typing.DK.Worklist.Bounded (runBounded, boundedMeta) where
 
 import Typing.DK.Common (isAllB, isLam)
 import Typing.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, initWL, runInfer, substWLOrd)
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Example (..))
 import Syntax (Trm (..), Typ (..), latexifyVar)
 import Unbound.Generics.LocallyNameless
   ( Fresh (fresh),
@@ -276,3 +276,31 @@ infer rule ws = do
 
 runBounded :: Trm -> InferResult
 runBounded tm = runInfer infer (initWL tm)
+
+-- Bounded algorithm metadata
+boundedMeta :: AlgMeta
+boundedMeta = AlgMeta
+  { metaId = "Bounded"
+  , metaName = "Worklist (Bounded Quantification)"
+  , metaLabels = ["Global", "Unification", "Worklist", "System Fsub", "Dunfield-Krishnaswami", "Higher-Rank", "Implicit", "Explicit Type Application", "Bounded-Quantification"]
+  , metaViewMode = "linear"
+  , metaMode = "inference"
+  , metaPaper = Paper
+    { paperTitle = "Greedy Implicit Bounded Quantification"
+    , paperAuthors = ["Chen Cui", "Shengyi Jiang", "Bruno C. d. S. Oliveira"]
+    , paperYear = 2023
+    , paperUrl = "https://dl.acm.org/doi/10.1145/3622871"
+    }
+  , metaVariants = Nothing
+  , metaDefaultVariant = Nothing
+  , metaRules = []
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    ]
+  }

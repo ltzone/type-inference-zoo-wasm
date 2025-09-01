@@ -25,11 +25,13 @@ source-repository head
 library
   exposed-modules:
       Alg
+      Algorithms
       Lib
       Opt
       Parser
       Subtyping.Recursive
       Subtyping.Recursive.Distributive
+      Subtyping.Recursive.Fsubmu
       Subtyping.Recursive.Lib
       Subtyping.Recursive.Nominal
       Subtyping.Recursive.Translate
@@ -49,7 +51,6 @@ library
       Typing.Local
       Typing.Local.Contextual
       Typing.Local.Contextual.Contextual
-      Typing.Local.Local
   other-modules:
       Paths_type_inference_zoo
   hs-source-dirs:

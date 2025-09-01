@@ -3,14 +3,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Typing.DK.Worklist.Elementary (runElementary) where
+module Typing.DK.Worklist.Elementary (runElementary, elementaryMeta) where
 
 import Typing.DK.Common (isAll)
 import Typing.DK.Worklist.Common (Entry (..), Judgment (..), TBind (..), Worklist, before, initWL, runInfer, substWL)
 import Control.Monad.Except (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
-import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar)
+import Lib (Derivation (..), InferMonad, InferResult (..), freshTVar, AlgMeta (..), Paper (..), Example (..))
 import Syntax (Trm (..), Typ (..), latexifyVar, pattern TAll, pattern TLam)
 import Unbound.Generics.LocallyNameless
   ( Fresh (fresh),
@@ -241,3 +241,31 @@ infer rule ws = do
 
 runElementary :: Trm -> InferResult
 runElementary tm = runInfer infer (initWL tm)
+
+-- Elementary algorithm metadata
+elementaryMeta :: AlgMeta
+elementaryMeta = AlgMeta
+  { metaId = "Elementary"
+  , metaName = "Worklist (Elementary)"
+  , metaLabels = ["Global", "Unification", "Worklist", "Dunfield-Krishnaswami", "System F", "Higher-Rank", "Implicit", "Explicit Type Application"]
+  , metaViewMode = "linear"
+  , metaMode = "inference"
+  , metaPaper = Paper
+    { paperTitle = "Elementary Type Inference"
+    , paperAuthors = ["Jinxu Zhao", "Bruno C. d. S. Oliveira"]
+    , paperYear = 2022
+    , paperUrl = "https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ECOOP.2022.2"
+    }
+  , metaVariants = Nothing
+  , metaDefaultVariant = Nothing
+  , metaRules = []
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    ]
+  }

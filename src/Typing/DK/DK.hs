@@ -3,14 +3,14 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Typing.DK.DK (runDK) where
+module Typing.DK.DK (runDK, dkMeta) where
 
 import Typing.DK.Common (isAll)
 import Control.Monad.Error.Class (MonadError (throwError))
 import Control.Monad.Writer (MonadTrans (lift), MonadWriter (tell))
 import Data.Foldable (find)
 import Data.List (intercalate)
-import Lib (Derivation (..), InferMonad, InferResult (..), break3, freshTVar, runInferMonad)
+import Lib (Derivation (..), InferMonad, InferResult (..), break3, freshTVar, runInferMonad, AlgMeta (..), Paper (..), Example (..))
 import Syntax (TmVar, Trm (..), TyVar, Typ (..), latexifyVar, wrapVar, pattern TAll)
 import Unbound.Generics.LocallyNameless (bind, fv, subst, unbind)
 import Unbound.Generics.LocallyNameless.Internal.Fold (toListOf)
@@ -288,3 +288,30 @@ runDK tm = case runInferMonad $ infer [] tm of
   Left [] -> InferResult False Nothing [] (Just "\\text{Unknown error}") True
   Left (err : drvs) -> InferResult False Nothing (map (\drv -> Derivation "Debug" drv []) drvs) (Just err) True
   Right ((ty, _, drv), _) -> InferResult True (Just $ show ty) [drv] Nothing False
+
+dkMeta :: AlgMeta
+dkMeta = AlgMeta
+  { metaId = "DK"
+  , metaName = "Dunfield-Krishnaswami"
+  , metaLabels = ["Global", "Unification", "Bidirectional", "System F", "Higher-Rank", "Implicit"]
+  , metaViewMode = "tree"
+  , metaMode = "inference"
+  , metaPaper = Paper
+    { paperTitle = "Complete and Easy Bidirectional Typechecking for Higher-rank Polymorphism"
+    , paperAuthors = ["Jana Dunfield", "Neelakantan R. Krishnaswami"]
+    , paperYear = 2013
+    , paperUrl = "https://dl.acm.org/doi/10.1145/2500365.2500582"
+    }
+  , metaVariants = Nothing
+  , metaDefaultVariant = Nothing
+  , metaRules = []
+  , metaRuleGroups = Nothing
+  , metaVariantRules = Nothing
+  , metaExamples = 
+    [ Example
+      { exampleName = "Trivial Application"
+      , exampleExpression = "(\\x. x) 1"
+      , exampleDescription = "Trivial function application of identity function to integer literal"
+      }
+    ]
+  }
